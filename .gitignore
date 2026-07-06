@@ -11,6 +11,9 @@ target/
 # and an older build wrote here)
 .fastembed_cache/
 
+# mkdocs build output
+site/
+
 # index artifacts
 *.db
 *.db-journal
