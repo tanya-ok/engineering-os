@@ -1,15 +1,21 @@
-//! Search server. Mirrors the Python /health and /search contract:
-//! vector kNN, optional hybrid (BM25 via RRF), optional MMR rerank, and
-//! vault/namespace filters.
+//! Search server. /health and /search: vector kNN, optional hybrid (BM25 via
+//! RRF), optional MMR rerank, and vault/namespace filters.
+//!
+//! Concurrency: the engine (SQLite connection + embedder) is `!Sync`, so it
+//! lives behind an `Arc<Mutex<..>>`. Each search runs its blocking SQL + CPU
+//! embedding inside `spawn_blocking`, so it never stalls a tokio worker, and
+//! the lock is poison-tolerant so one failed request cannot brick the server.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use axum::{
-    extract::State,
-    routing::{get, post},
     Json, Router,
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::{get, post},
 };
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
@@ -27,6 +33,37 @@ pub struct Engine {
 }
 
 type Shared = Arc<Mutex<Engine>>;
+
+/// Carries an HTTP status so a client error (400) is distinguishable from an
+/// internal failure (500), and both from a genuinely empty result set.
+struct AppError {
+    status: StatusCode,
+    message: String,
+}
+
+impl AppError {
+    fn bad_request(msg: impl Into<String>) -> Self {
+        AppError {
+            status: StatusCode::BAD_REQUEST,
+            message: msg.into(),
+        }
+    }
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        (self.status, self.message).into_response()
+    }
+}
+
+impl<E: Into<anyhow::Error>> From<E> for AppError {
+    fn from(e: E) -> Self {
+        AppError {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            message: format!("search error: {:#}", e.into()),
+        }
+    }
+}
 
 #[derive(Deserialize)]
 struct SearchRequest {
@@ -60,6 +97,8 @@ struct SearchHit {
     path: String,
     heading: String,
     content: String,
+    /// RRF fusion score. Note: when `mmr` is set, the returned ordering is the
+    /// MMR ordering, which may not be monotonic in this score.
     score: f64,
 }
 
@@ -107,7 +146,7 @@ pub async fn serve(cfg: Config, host: String, port: u16) -> Result<()> {
 }
 
 async fn health(State(state): State<Shared>) -> Json<serde_json::Value> {
-    let eng = state.lock().unwrap();
+    let eng = state.lock().unwrap_or_else(|e| e.into_inner());
     let chunks: i64 = eng
         .conn
         .query_row("SELECT COUNT(*) FROM chunks", [], |r| r.get(0))
@@ -127,10 +166,29 @@ async fn health(State(state): State<Shared>) -> Json<serde_json::Value> {
 async fn search(
     State(state): State<Shared>,
     Json(req): Json<SearchRequest>,
-) -> Json<SearchResponse> {
-    let mut eng = state.lock().unwrap();
-    let hits = run_search(&mut eng, &req).unwrap_or_default();
-    Json(SearchResponse { hits })
+) -> Result<Json<SearchResponse>, AppError> {
+    if req.query.trim().is_empty() {
+        return Err(AppError::bad_request("query must not be empty"));
+    }
+    let hits = tokio::task::spawn_blocking(move || -> Result<Vec<SearchHit>> {
+        let mut eng = state.lock().unwrap_or_else(|e| e.into_inner());
+        run_search(&mut eng, &req)
+    })
+    .await
+    .context("search task panicked")??;
+    Ok(Json(SearchResponse { hits }))
+}
+
+/// Reciprocal rank fusion of a vector-kNN ranking and a BM25 ranking.
+fn rrf_fuse(knn: &[i64], fts: &[i64]) -> HashMap<i64, f64> {
+    let mut fused: HashMap<i64, f64> = HashMap::new();
+    for (rank, &cid) in knn.iter().enumerate() {
+        fused.insert(cid, 1.0 / (RRF_K + (rank + 1) as f64));
+    }
+    for (rank, &cid) in fts.iter().enumerate() {
+        *fused.entry(cid).or_insert(0.0) += 1.0 / (RRF_K + (rank + 1) as f64);
+    }
+    fused
 }
 
 fn run_search(eng: &mut Engine, req: &SearchRequest) -> Result<Vec<SearchHit>> {
@@ -138,8 +196,6 @@ fn run_search(eng: &mut Engine, req: &SearchRequest) -> Result<Vec<SearchHit>> {
     let filtering = req.vaults.is_some() || req.namespaces.is_some() || req.hybrid || req.mmr;
     let pool = if filtering { req.top * 6 } else { req.top };
 
-    // Vector kNN.
-    let mut fused: HashMap<i64, f64> = HashMap::new();
     let knn_ids: Vec<i64> = {
         let mut stmt = eng.conn.prepare(
             "SELECT chunk_id FROM embeddings WHERE embedding MATCH ?1 AND k = ?2 ORDER BY distance",
@@ -149,29 +205,25 @@ fn run_search(eng: &mut Engine, req: &SearchRequest) -> Result<Vec<SearchHit>> {
         })?;
         rows.filter_map(|r| r.ok()).collect()
     };
-    for (rank, cid) in knn_ids.into_iter().enumerate() {
-        fused.insert(cid, 1.0 / (RRF_K + (rank + 1) as f64));
-    }
 
-    // BM25 lexical pass fused via RRF.
-    if req.hybrid {
+    // BM25 lexical pass. The query is wrapped as a single FTS5 phrase, so a
+    // multi-word query matches the exact phrase (recall by design, not OR).
+    let fts_ids: Vec<i64> = if req.hybrid {
         let fts_query = format!("\"{}\"", req.query.replace('"', "\"\""));
-        let fts_ids: Vec<i64> = {
-            let mut stmt = eng
-                .conn
-                .prepare("SELECT rowid FROM chunks_fts WHERE chunks_fts MATCH ?1 ORDER BY bm25(chunks_fts) LIMIT ?2")?;
-            let ids = match stmt.query_map(rusqlite::params![fts_query, pool as i64], |r| {
-                r.get::<_, i64>(0)
-            }) {
-                Ok(rows) => rows.filter_map(|r| r.ok()).collect(),
-                Err(_) => Vec::new(),
-            };
-            ids
-        };
-        for (rank, cid) in fts_ids.into_iter().enumerate() {
-            *fused.entry(cid).or_insert(0.0) += 1.0 / (RRF_K + (rank + 1) as f64);
+        let mut stmt = eng.conn.prepare(
+            "SELECT rowid FROM chunks_fts WHERE chunks_fts MATCH ?1 ORDER BY bm25(chunks_fts) LIMIT ?2",
+        )?;
+        match stmt.query_map(rusqlite::params![fts_query, pool as i64], |r| {
+            r.get::<_, i64>(0)
+        }) {
+            Ok(rows) => rows.filter_map(|r| r.ok()).collect(),
+            Err(_) => Vec::new(),
         }
-    }
+    } else {
+        Vec::new()
+    };
+
+    let fused = rrf_fuse(&knn_ids, &fts_ids);
 
     // Load metadata and apply filters.
     let mut meta: HashMap<i64, Meta> = HashMap::new();
@@ -207,10 +259,10 @@ fn run_search(eng: &mut Engine, req: &SearchRequest) -> Result<Vec<SearchHit>> {
     }
 
     let mut candidates: Vec<i64> = meta.keys().copied().collect();
-    candidates.sort_by(|a, b| fused[b].partial_cmp(&fused[a]).unwrap());
+    candidates.sort_by(|a, b| fused[b].total_cmp(&fused[a]));
 
     let ordered = if req.mmr && candidates.len() > 1 {
-        mmr_rerank(eng, &candidates, &fused, &qvec, req.top, req.mmr_lambda)?
+        mmr_rerank(eng, &candidates, &fused, req.top, req.mmr_lambda)?
     } else {
         candidates.into_iter().take(req.top).collect()
     };
@@ -243,7 +295,6 @@ fn mmr_rerank(
     eng: &Engine,
     candidates: &[i64],
     scores: &HashMap<i64, f64>,
-    _qvec: &[f32],
     top: usize,
     lambda: f64,
 ) -> Result<Vec<i64>> {
@@ -282,4 +333,27 @@ fn mmr_rerank(
         pool.retain(|&c| c != best);
     }
     Ok(selected)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rrf_rewards_agreement_between_rankings() {
+        // doc 1 is #1 in both lists; doc 2 only in kNN; doc 4 only in FTS.
+        let fused = rrf_fuse(&[1, 2, 3], &[1, 4, 5]);
+        let both = 2.0 * (1.0 / (RRF_K + 1.0));
+        assert!((fused[&1] - both).abs() < 1e-12);
+        assert!((fused[&2] - 1.0 / (RRF_K + 2.0)).abs() < 1e-12);
+        assert!((fused[&4] - 1.0 / (RRF_K + 2.0)).abs() < 1e-12);
+        assert!(fused[&1] > fused[&2] && fused[&1] > fused[&4]);
+    }
+
+    #[test]
+    fn rrf_empty_fts_is_pure_vector() {
+        let fused = rrf_fuse(&[7, 8], &[]);
+        assert_eq!(fused.len(), 2);
+        assert!((fused[&7] - 1.0 / (RRF_K + 1.0)).abs() < 1e-12);
+    }
 }

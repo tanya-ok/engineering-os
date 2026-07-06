@@ -1,5 +1,5 @@
 //! eos-rag: single-binary local RAG for engineering-os.
-//! Subcommands mirror the Python scripts: `index` and `serve`.
+//! Subcommands: `index` (build/update) and `serve` (search API).
 
 mod chunk;
 mod config;
@@ -10,7 +10,7 @@ mod server;
 
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 
 use config::Config;
@@ -74,10 +74,13 @@ fn run_index(config_path: &std::path::Path, rebuild: bool) -> Result<()> {
 fn run_serve(config_path: &std::path::Path) -> Result<()> {
     let cfg = Config::load(config_path)?;
     let host = std::env::var("EOS_SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
-    let port: u16 = std::env::var("EOS_SERVER_PORT")
-        .ok()
-        .and_then(|p| p.parse().ok())
-        .unwrap_or(8765);
+    // A bad EOS_SERVER_PORT is a mistake, not a reason to silently serve on 8765.
+    let port: u16 = match std::env::var("EOS_SERVER_PORT") {
+        Ok(v) => v
+            .parse()
+            .with_context(|| format!("EOS_SERVER_PORT={v:?} is not a valid port"))?,
+        Err(_) => 8765,
+    };
     let rt = tokio::runtime::Runtime::new()?;
     rt.block_on(server::serve(cfg, host, port))
 }

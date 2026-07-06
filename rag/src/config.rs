@@ -1,4 +1,4 @@
-//! Config shared with the Python implementation: same rag/vaults.json shape.
+//! Config for the RAG layer: the rag/vaults.json shape.
 
 use std::path::{Path, PathBuf};
 
@@ -46,24 +46,53 @@ fn default_index_db() -> String {
     "~/.engineering-os/index.db".to_string()
 }
 
-/// Expand ~ and $VARS, then make absolute.
-fn expand(raw: &str) -> PathBuf {
-    let mut s = raw.to_string();
-    if let Some(rest) = s.strip_prefix("~") {
-        if let Some(home) = std::env::var_os("HOME") {
-            s = format!("{}{}", home.to_string_lossy(), rest);
+/// Expand a leading `~` only when it is the whole string or is followed by `/`,
+/// so `~backup` is left untouched rather than turned into `${HOME}backup`.
+fn expand_tilde(raw: &str, home: Option<&str>) -> String {
+    if raw == "~" {
+        return home.unwrap_or(raw).to_string();
+    }
+    if let Some(rest) = raw.strip_prefix("~/")
+        && let Some(h) = home
+    {
+        return format!("{h}/{rest}");
+    }
+    raw.to_string()
+}
+
+/// Single-pass `$VAR` expansion. An undefined variable expands to empty; a lone
+/// `$` is kept literally. Single pass means a value that itself contains `$` is
+/// never re-expanded (no runaway).
+fn expand_vars(s: &str, lookup: impl Fn(&str) -> Option<String>) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
+    while let Some(pos) = rest.find('$') {
+        out.push_str(&rest[..pos]);
+        let after = &rest[pos + 1..];
+        let name_len = after
+            .char_indices()
+            .take_while(|(_, c)| c.is_ascii_alphanumeric() || *c == '_')
+            .map(|(i, c)| i + c.len_utf8())
+            .last()
+            .unwrap_or(0);
+        if name_len == 0 {
+            out.push('$');
+            rest = after;
+        } else {
+            if let Some(val) = lookup(&after[..name_len]) {
+                out.push_str(&val);
+            }
+            rest = &after[name_len..];
         }
     }
-    // Minimal $VAR expansion for the common case.
-    while let Some(start) = s.find('$') {
-        let rest = &s[start + 1..];
-        let end = rest
-            .find(|c: char| !c.is_ascii_alphanumeric() && c != '_')
-            .unwrap_or(rest.len());
-        let var = &rest[..end];
-        let val = std::env::var(var).unwrap_or_default();
-        s = format!("{}{}{}", &s[..start], val, &rest[end..]);
-    }
+    out.push_str(rest);
+    out
+}
+
+fn expand(raw: &str) -> PathBuf {
+    let home = std::env::var("HOME").ok();
+    let s = expand_tilde(raw, home.as_deref());
+    let s = expand_vars(&s, |k| std::env::var(k).ok());
     PathBuf::from(s)
 }
 
@@ -88,5 +117,52 @@ impl Config {
             cfg.embed_model = m;
         }
         Ok(cfg)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tilde_slash_expands() {
+        assert_eq!(expand_tilde("~/notes", Some("/base")), "/base/notes");
+        assert_eq!(expand_tilde("~", Some("/base")), "/base");
+    }
+
+    #[test]
+    fn tilde_prefix_without_slash_is_left_alone() {
+        assert_eq!(expand_tilde("~backup/x", Some("/base")), "~backup/x");
+    }
+
+    #[test]
+    fn tilde_without_home_is_left_alone() {
+        assert_eq!(expand_tilde("~/notes", None), "~/notes");
+    }
+
+    #[test]
+    fn vars_expand_and_undefined_is_empty() {
+        let lookup = |k: &str| match k {
+            "V" => Some("/data".to_string()),
+            _ => None,
+        };
+        assert_eq!(expand_vars("$V/sub", lookup), "/data/sub");
+        assert_eq!(expand_vars("$MISSING/sub", lookup), "/sub");
+        assert_eq!(expand_vars("no vars here", lookup), "no vars here");
+    }
+
+    #[test]
+    fn expanded_value_is_not_re_expanded() {
+        let lookup = |k: &str| match k {
+            "A" => Some("$B".to_string()),
+            "B" => Some("boom".to_string()),
+            _ => None,
+        };
+        assert_eq!(expand_vars("$A", lookup), "$B");
+    }
+
+    #[test]
+    fn lone_dollar_is_kept() {
+        assert_eq!(expand_vars("cost is $ 5", |_| None), "cost is $ 5");
     }
 }

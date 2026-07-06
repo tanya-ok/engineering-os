@@ -1,19 +1,34 @@
-//! Incremental indexer. Mirrors the Python build_index.py: only files whose
-//! mtime changed are reprocessed; underscore-prefixed folders are excluded per
-//! the vault's exclude_underscore_prefix flag.
+//! Incremental indexer: only files whose mtime changed are reprocessed;
+//! underscore-prefixed folders are excluded per the vault's
+//! exclude_underscore_prefix flag.
+//!
+//! Each file is embedded BEFORE any database mutation, and all of its row
+//! changes (delete old, upsert file, insert chunks) run in one transaction, so
+//! a failed embed or a crash mid-run can never leave a file marked fresh with
+//! its chunks deleted (which would skip it forever).
 
 use std::collections::HashMap;
 use std::path::Path;
 use std::time::UNIX_EPOCH;
 
 use anyhow::Result;
-use rusqlite::Connection;
+use rusqlite::{Connection, params};
 use walkdir::WalkDir;
 
 use crate::chunk::chunk_markdown;
 use crate::config::{Config, VaultEntry};
 use crate::db::{self, f32_to_bytes};
 use crate::embed::Embedder;
+
+const MTIME_EPS: f64 = 0.001;
+
+/// A file needs reindexing if it is new or its mtime moved beyond the epsilon.
+pub fn needs_reindex(in_db: Option<f64>, mtime: f64) -> bool {
+    match in_db {
+        Some(prev) => (prev - mtime).abs() >= MTIME_EPS,
+        None => true,
+    }
+}
 
 fn mtime_secs(path: &Path) -> f64 {
     path.metadata()
@@ -77,6 +92,20 @@ fn delete_file_rows(conn: &Connection, file_id: i64) -> Result<()> {
     Ok(())
 }
 
+fn namespace_of(path: &str, root: &Path) -> String {
+    let rel = Path::new(path)
+        .strip_prefix(root)
+        .unwrap_or(Path::new(path));
+    if rel.components().count() > 1 {
+        rel.components()
+            .next()
+            .map(|c| c.as_os_str().to_string_lossy().to_string())
+            .unwrap_or_default()
+    } else {
+        String::new()
+    }
+}
+
 pub fn index_all(cfg: &Config, embedder: &mut Embedder, conn: &Connection) -> Result<usize> {
     db::ensure_schema(conn, embedder.dim, &cfg.embed_model)?;
     let mut total_new = 0usize;
@@ -100,23 +129,20 @@ pub fn index_all(cfg: &Config, embedder: &mut Embedder, conn: &Connection) -> Re
             rows.filter_map(|r| r.ok()).collect()
         };
 
+        // Files deleted on disk: remove their rows atomically.
         for gone in in_db.keys().filter(|p| !on_disk.contains_key(*p)) {
-            if let Ok(file_id) =
-                conn.query_row("SELECT id FROM files WHERE path = ?1", [gone], |r| {
-                    r.get::<_, i64>(0)
-                })
-            {
-                delete_file_rows(conn, file_id)?;
-                conn.execute("DELETE FROM files WHERE id = ?1", [file_id])?;
+            let tx = conn.unchecked_transaction()?;
+            if let Ok(id) = tx.query_row("SELECT id FROM files WHERE path = ?1", [gone], |r| {
+                r.get::<_, i64>(0)
+            }) {
+                delete_file_rows(&tx, id)?;
+                tx.execute("DELETE FROM files WHERE id = ?1", [id])?;
             }
+            tx.commit()?;
         }
 
         for (path, mtime) in &on_disk {
-            if in_db
-                .get(path)
-                .map(|m| (m - mtime).abs() < 0.001)
-                .unwrap_or(false)
-            {
+            if !needs_reindex(in_db.get(path).copied(), *mtime) {
                 continue;
             }
             let text = match std::fs::read_to_string(path) {
@@ -127,70 +153,91 @@ pub fn index_all(cfg: &Config, embedder: &mut Embedder, conn: &Connection) -> Re
                 }
             };
 
-            let file_id =
-                match conn.query_row("SELECT id FROM files WHERE path = ?1", [path], |r| {
-                    r.get::<_, i64>(0)
-                }) {
-                    Ok(id) => {
-                        delete_file_rows(conn, id)?;
-                        conn.execute(
-                            "UPDATE files SET mtime = ?1 WHERE id = ?2",
-                            rusqlite::params![mtime, id],
-                        )?;
-                        id
-                    }
-                    Err(_) => {
-                        conn.execute(
-                            "INSERT INTO files(vault_id, path, mtime) VALUES (?1, ?2, ?3)",
-                            rusqlite::params![vault.vault_id, path, mtime],
-                        )?;
-                        conn.last_insert_rowid()
-                    }
-                };
-
-            let root = &vault.resolved_path;
-            let rel = Path::new(path)
-                .strip_prefix(root)
-                .unwrap_or(Path::new(path));
-            let namespace = rel
-                .components()
-                .next()
-                .filter(|_| rel.components().count() > 1)
-                .map(|c| c.as_os_str().to_string_lossy().to_string())
-                .unwrap_or_default();
-
             let chunks = chunk_markdown(&text);
-            if chunks.is_empty() {
-                continue;
-            }
-            let vectors =
-                embedder.embed_batch(chunks.iter().map(|c| c.content.clone()).collect())?;
+            // Embed first: if this fails, ? returns before any DB mutation, so
+            // the existing rows and mtime stay intact.
+            let vectors = if chunks.is_empty() {
+                Vec::new()
+            } else {
+                embedder.embed_batch(chunks.iter().map(|c| c.content.clone()).collect())?
+            };
+
+            let namespace = namespace_of(path, &vault.resolved_path);
+
+            let tx = conn.unchecked_transaction()?;
+            let file_id = match tx.query_row("SELECT id FROM files WHERE path = ?1", [path], |r| {
+                r.get::<_, i64>(0)
+            }) {
+                Ok(id) => {
+                    delete_file_rows(&tx, id)?;
+                    tx.execute(
+                        "UPDATE files SET mtime = ?1 WHERE id = ?2",
+                        params![mtime, id],
+                    )?;
+                    id
+                }
+                Err(_) => {
+                    tx.execute(
+                        "INSERT INTO files(vault_id, path, mtime) VALUES (?1, ?2, ?3)",
+                        params![vault.vault_id, path, mtime],
+                    )?;
+                    tx.last_insert_rowid()
+                }
+            };
+
             for (c, vec) in chunks.iter().zip(vectors.iter()) {
-                conn.execute(
+                tx.execute(
                     "INSERT INTO chunks(file_id, vault_id, namespace, heading, content) VALUES (?1, ?2, ?3, ?4, ?5)",
-                    rusqlite::params![file_id, vault.vault_id, namespace, c.heading, c.content],
+                    params![file_id, vault.vault_id, namespace, c.heading, c.content],
                 )?;
-                let cid = conn.last_insert_rowid();
-                conn.execute(
+                let cid = tx.last_insert_rowid();
+                tx.execute(
                     "INSERT INTO embeddings(chunk_id, embedding) VALUES (?1, ?2)",
-                    rusqlite::params![cid, f32_to_bytes(vec)],
+                    params![cid, f32_to_bytes(vec)],
                 )?;
-                conn.execute(
+                tx.execute(
                     "INSERT INTO chunks_fts(rowid, content) VALUES (?1, ?2)",
-                    rusqlite::params![cid, c.content],
+                    params![cid, c.content],
                 )?;
             }
+            tx.commit()?;
+
             total_new += chunks.len();
-            println!(
-                "[{}] indexed {} ({} chunks)",
-                vault.vault_id,
-                Path::new(path)
-                    .file_name()
-                    .unwrap_or_default()
-                    .to_string_lossy(),
-                chunks.len()
-            );
+            if !chunks.is_empty() {
+                println!(
+                    "[{}] indexed {} ({} chunks)",
+                    vault.vault_id,
+                    Path::new(path)
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy(),
+                    chunks.len()
+                );
+            }
         }
     }
     Ok(total_new)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reindex_decision() {
+        assert!(needs_reindex(None, 100.0), "new file must index");
+        assert!(!needs_reindex(Some(100.0), 100.0), "same mtime skips");
+        assert!(
+            !needs_reindex(Some(100.0), 100.0005),
+            "within epsilon skips"
+        );
+        assert!(needs_reindex(Some(100.0), 101.0), "changed mtime reindexes");
+    }
+
+    #[test]
+    fn namespace_extraction() {
+        let root = Path::new("/vault");
+        assert_eq!(namespace_of("/vault/CloudOps/run.md", root), "CloudOps");
+        assert_eq!(namespace_of("/vault/top.md", root), "");
+    }
 }

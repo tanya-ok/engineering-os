@@ -707,7 +707,6 @@ dependencies = [
  "sqlite-vec",
  "tokio",
  "walkdir",
- "zerocopy",
 ]
 
 [[package]]
