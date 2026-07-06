@@ -4,28 +4,18 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-missing=0
-if ! command -v uv >/dev/null 2>&1; then
-  echo "uv not found. Install it first:"
-  echo "  curl -LsSf https://astral.sh/uv/install.sh | sh   (inspect before running)"
-  missing=1
+if ! command -v cargo >/dev/null 2>&1; then
+  echo "Rust toolchain not found. Install it first:"
+  echo "  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh   (inspect before running)"
+  exit 1
 fi
-if ! command -v pnpm >/dev/null 2>&1; then
-  echo "pnpm not found. Install it first:"
-  echo "  corepack enable && corepack prepare pnpm@latest --activate"
-  missing=1
-fi
-[ "$missing" -ne 0 ] && exit 1
 
-echo "Installing Python dependencies (uv sync)..."
-uv sync
-
-echo "Installing Node dev tooling (pnpm install)..."
-pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+echo "Building the RAG binary (first build downloads the ONNX runtime, this is slow)..."
+cargo build --release --manifest-path rag/Cargo.toml
 
 if [ ! -f .env ]; then
   cp .env.example .env
-  echo "Created .env from .env.example (defaults work for the demo vault)."
+  echo "Created .env from .env.example (defaults work for the demo vaults)."
 fi
 
 if [ ! -f rag/vaults.json ]; then
@@ -38,13 +28,11 @@ if [ ! -f rag/routing.json ]; then
   echo "Created rag/routing.json (write-routing contract)."
 fi
 
-echo "Sanity check: importing sentence_transformers (may take a moment)..."
-uv run python -c "import sentence_transformers, sqlite_vec, fastapi" \
-  && echo "Python environment OK."
-
 echo ""
-echo "Next steps:"
-echo "  uv run python rag/build_index.py --config rag/vaults.json   # build the index"
-echo "  uv run python rag/server.py --config rag/vaults.json        # start search on :8765"
-echo "  pnpm exec lefthook install                                  # enable git hooks"
+echo "Next steps (run from the repo root):"
+echo "  ./rag/target/release/eos-rag index --config rag/vaults.json   # build the index"
+echo "  ./rag/target/release/eos-rag serve --config rag/vaults.json   # start search on :8765"
 echo "  open vault-template/ in Obsidian and make it yours"
+echo ""
+echo "Optional: install the git hooks (needs lefthook: brew install lefthook)"
+echo "  lefthook install"

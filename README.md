@@ -8,8 +8,8 @@ knowledge base, wired into AI coding agents.
 - An Obsidian vault template scaffolded for the five domains an infra engineer
   actually works in: **CloudOps, FinOps, DevOps, SecOps, Architecture**.
 - A local **hybrid RAG index** over your vault: SQLite + sqlite-vec + FTS5,
-  vector search fused with BM25, optional MMR reranking. No cloud, no Postgres,
-  no external services. Your notes never leave your machine.
+  vector search fused with BM25, optional MMR reranking. A single Rust binary,
+  no Python, no PyTorch, no cloud. Your notes never leave your machine.
 - An HTTP search server your AI agent (Claude Code or any MCP-capable client)
   can query for grounded context.
 - ADR scaffolding, weekly review structure, and an index layer
@@ -21,13 +21,13 @@ knowledge base, wired into AI coding agents.
 ```sh
 git clone https://github.com/YOUR_USER/engineering-os.git
 cd engineering-os
-./scripts/setup.sh          # checks uv + pnpm, installs deps, copies example configs
+./scripts/setup.sh          # checks cargo, builds the binary, copies example configs
 
 # index the shipped vault templates (or point at your own vaults)
-uv run python rag/build_index.py --config rag/vaults.json
+./rag/target/release/eos-rag index --config rag/vaults.json
 
 # start the search server
-uv run python rag/server.py
+./rag/target/release/eos-rag serve --config rag/vaults.json
 
 # query it
 curl -s -X POST http://127.0.0.1:8765/search \
@@ -46,17 +46,23 @@ three markdown vaults      =  the database
   user-vault-template/     =  you: communication style, environment, facts
         |
         v
-rag/build_index.py         =  chunk + embed + store (incremental, mtime-based)
+eos-rag index              =  chunk + embed + store (incremental, mtime-based)
         |
         v
 ~/.engineering-os/index.db =  SQLite: chunks + vec0 embeddings + FTS5
         |
         v
-rag/server.py (:8765)      =  POST /search  (vector kNN + BM25 via RRF, MMR)
+eos-rag serve (:8765)      =  POST /search  (vector kNN + BM25 via RRF, MMR)
         |
         v
 your AI agent              =  grounded answers from all three vaults
 ```
+
+The RAG layer is a single Rust binary (`eos-rag`): embedding runs through
+[fastembed](https://crates.io/crates/fastembed) (ONNX Runtime, quantized
+models) and storage is SQLite via
+[sqlite-vec](https://github.com/asg017/sqlite-vec) plus FTS5. No Python
+runtime, no PyTorch.
 
 **Reading is unified, writing is segregated.** All three vaults are indexed
 into one database, so an agent retrieves across your work knowledge, its own
@@ -95,20 +101,20 @@ example note showing the expected shape.
 
 ## Requirements
 
-- Python 3.12 (managed by [uv](https://docs.astral.sh/uv/))
-- Node.js 24 (Active LTS; only needed for lint tooling)
+- A Rust toolchain (stable) to build the binary, or a prebuilt binary from a release.
 - Obsidian (optional but recommended)
 
-First index run downloads the embedding model
-(`sentence-transformers/all-MiniLM-L6-v2`, ~90 MB). Swap the model in
-`rag/vaults.json` if you want multilingual retrieval.
+First build downloads the ONNX runtime; first index run downloads the embedding
+model (`all-MiniLM-L6-v2`, ~90 MB). Both are cached. Swap the model in
+`rag/vaults.json` for multilingual retrieval (`multilingual-e5-*`).
 
 ## Roadmap
 
-- v0.1: vault template + RAG layer (this)
+- v0.1: vault template + Rust RAG layer (this)
 - v0.2: Claude Code skills and hooks (session context loader, weekly review, ADR scaffolder)
 - v0.3: beads task-graph integration for agent work tracking
 - v0.4: docs site (MkDocs Material, GitHub Pages)
+- Later: prebuilt binaries per platform via GitHub Releases
 
 ## License
 

@@ -5,8 +5,8 @@ Thanks for considering a contribution.
 ## Setup
 
 ```sh
-./scripts/setup.sh
-pnpm exec lefthook install   # installs the pre-commit / pre-push gates
+./scripts/setup.sh              # checks cargo, builds the binary, copies example configs
+lefthook install               # installs the pre-commit / pre-push gates (needs: brew install lefthook)
 ```
 
 ## Rules
@@ -20,12 +20,13 @@ pnpm exec lefthook install   # installs the pre-commit / pre-push gates
 - **Vault template content must be synthetic.** Write example notes from
   scratch. Do not paste sanitized copies of real notes; sanitization leaks.
 - **English only** in all committed artifacts.
-- **Lint before pushing.** `pnpm run lint` for JS/JSON, `uv run ruff check rag/`
-  for Python.
+- **Lint before pushing.** `cargo fmt --manifest-path rag/Cargo.toml --check`
+  and `cargo clippy --manifest-path rag/Cargo.toml -- -D warnings`.
 - Conventional-style commits: `type: Subject` (feat, fix, docs, ci, chore,
   refactor, test, security).
 
 ## Pull requests
 
-CI runs lint, secret scan, and the anonymization gate against the full PR
-diff. A red anonymization job is never overridden; fix the content.
+CI runs Rust lint (rustfmt + clippy), secret scan, and the anonymization gate
+against the full PR diff. A red anonymization job is never overridden; fix the
+content.

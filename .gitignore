@@ -4,14 +4,12 @@ rag/vaults.json
 rag/routing.json
 scripts/anonymization-patterns.local.txt
 
-# python
-.venv/
-__pycache__/
-*.pyc
-.ruff_cache/
+# rust
+target/
 
-# node
-node_modules/
+# downloaded embedding model cache (fallback location if EOS_MODEL_CACHE unset
+# and an older build wrote here)
+.fastembed_cache/
 
 # index artifacts
 *.db

@@ -1,12 +1,13 @@
-# Git hooks. Install once with: pnpm exec lefthook install
+# Git hooks. Install once with: lefthook install
+# (lefthook is a standalone binary: brew install lefthook, or see lefthook.dev)
 pre-commit:
   parallel: true
   commands:
     anonymization:
       run: scripts/anonymization-check.sh staged
-    biome:
-      glob: "*.{js,jsx,ts,tsx,json}"
-      run: npx biome check {staged_files}
+    rustfmt:
+      glob: "*.rs"
+      run: cargo fmt --manifest-path rag/Cargo.toml --check
 
 pre-push:
   commands:

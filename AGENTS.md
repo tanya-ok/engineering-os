@@ -47,8 +47,8 @@ Standing behavioral, git, language, and security policies live in
 | `vault-template/` | Work vault: five domains + `_Index/` + `Weekly/` |
 | `ai-vault-template/` | AI vault: identity, interaction rules, observations |
 | `user-vault-template/` | User vault: communication, environment, facts, `_inbox/` |
-| `rag/build_index.py` | Incremental indexer: chunk, embed, store |
-| `rag/server.py` | Search server: /health, /search (hybrid + MMR) |
+| `rag/` | Rust RAG layer: `eos-rag` binary (index + serve), fastembed + sqlite-vec |
+| `rag/src/` | indexer, search server (/health, /search hybrid + MMR), config, chunker |
 | `rag/vaults.example.json` | Vault registry template (env-driven paths) |
 | `rag/routing.example.json` | Write-routing contract (unified read, segregated write) |
 | `standards/` | Governance layer: canonical policies, skills, hooks, plugin manifest |

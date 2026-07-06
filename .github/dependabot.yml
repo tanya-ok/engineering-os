@@ -1,18 +1,11 @@
 version: 2
 updates:
-  - package-ecosystem: npm
-    directory: /
+  - package-ecosystem: cargo
+    directory: /rag
     schedule:
       interval: weekly
     groups:
-      npm-all:
-        patterns: ["*"]
-  - package-ecosystem: pip
-    directory: /
-    schedule:
-      interval: weekly
-    groups:
-      pip-all:
+      cargo-all:
         patterns: ["*"]
   - package-ecosystem: github-actions
     directory: /

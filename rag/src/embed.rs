@@ -1,12 +1,24 @@
 //! Embedding via fastembed (ONNX Runtime, no PyTorch). Maps the config's
 //! HuggingFace-style model id to a fastembed model.
 
+use std::path::PathBuf;
+
 use anyhow::Result;
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 
 pub struct Embedder {
     model: TextEmbedding,
     pub dim: usize,
+}
+
+/// Where downloaded ONNX models are cached. Defaults under ~/.engineering-os
+/// so a run never litters the working directory. Override with EOS_MODEL_CACHE.
+fn model_cache_dir() -> PathBuf {
+    if let Ok(dir) = std::env::var("EOS_MODEL_CACHE") {
+        return PathBuf::from(dir);
+    }
+    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    PathBuf::from(home).join(".engineering-os").join("models")
 }
 
 fn resolve_model(id: &str) -> EmbeddingModel {
@@ -24,7 +36,9 @@ fn resolve_model(id: &str) -> EmbeddingModel {
 impl Embedder {
     pub fn new(model_id: &str) -> Result<Embedder> {
         let mut model = TextEmbedding::try_new(
-            InitOptions::new(resolve_model(model_id)).with_show_download_progress(true),
+            InitOptions::new(resolve_model(model_id))
+                .with_cache_dir(model_cache_dir())
+                .with_show_download_progress(true),
         )?;
         let probe = model.embed(vec!["dimension probe"], None)?;
         let dim = probe.first().map(|v| v.len()).unwrap_or(0);
