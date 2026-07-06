@@ -21,9 +21,9 @@ knowledge base, wired into AI coding agents.
 ```sh
 git clone https://github.com/YOUR_USER/engineering-os.git
 cd engineering-os
-./scripts/setup.sh          # checks uv + pnpm, installs deps, copies .env.example
+./scripts/setup.sh          # checks uv + pnpm, installs deps, copies example configs
 
-# index the shipped vault template (or point at your own vault)
+# index the shipped vault templates (or point at your own vaults)
 uv run python rag/build_index.py --config rag/vaults.json
 
 # start the search server
@@ -40,7 +40,10 @@ Then open `vault-template/` in Obsidian and make it yours.
 ## How it works
 
 ```
-Obsidian vault (markdown)  =  the database
+three markdown vaults      =  the database
+  vault-template/          =  work knowledge (five domains)
+  ai-vault-template/       =  the agent's self-knowledge + interaction rules
+  user-vault-template/     =  you: communication style, environment, facts
         |
         v
 rag/build_index.py         =  chunk + embed + store (incremental, mtime-based)
@@ -52,12 +55,30 @@ rag/build_index.py         =  chunk + embed + store (incremental, mtime-based)
 rag/server.py (:8765)      =  POST /search  (vector kNN + BM25 via RRF, MMR)
         |
         v
-your AI agent              =  grounded answers from YOUR notes
+your AI agent              =  grounded answers from all three vaults
 ```
 
-Reading is unified: every registered vault is indexed into one database.
-Writing is yours: the vault stays plain markdown, editable in Obsidian or by
-an agent following the conventions in `AGENTS.md`.
+**Reading is unified, writing is segregated.** All three vaults are indexed
+into one database, so an agent retrieves across your work knowledge, its own
+memory, and your user model at once. Writing is governed by a routing contract
+(`rag/routing.json`): agent self-knowledge goes to the AI vault, durable facts
+about you are staged in the user vault, operational work lands in the work
+vault's domains. The vaults stay plain markdown, editable in Obsidian.
+
+## The three vaults
+
+| Vault | Holds | Why it exists |
+|---|---|---|
+| **work** (`vault-template/`) | Runbooks, cost reviews, pipelines, controls, ADRs | Your infrastructure knowledge, split into five domains |
+| **ai** (`ai-vault-template/`) | The agent's identity, learned interaction rules, observations | So a correction you give once survives to the next session |
+| **user** (`user-vault-template/`) | Your communication style, local environment, stable facts | So the agent matches you instead of guessing |
+
+## The standards layer
+
+`standards/` is the governance layer, kept separate from the vaults: canonical
+policy modules, the skills and hooks that operationalize them, and a plugin
+manifest that makes the whole thing installable. It is structured so it can be
+extracted into its own plugin repo later. See `standards/README.md`.
 
 ## The five domains
 

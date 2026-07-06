@@ -30,7 +30,12 @@ fi
 
 if [ ! -f rag/vaults.json ]; then
   cp rag/vaults.example.json rag/vaults.json
-  echo "Created rag/vaults.json from the example (points at vault-template/)."
+  echo "Created rag/vaults.json from the example (registers all three vaults)."
+fi
+
+if [ ! -f rag/routing.json ]; then
+  cp rag/routing.example.json rag/routing.json
+  echo "Created rag/routing.json (write-routing contract)."
 fi
 
 echo "Sanity check: importing sentence_transformers (may take a moment)..."

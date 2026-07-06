@@ -1,6 +1,7 @@
 # env and local config
 .env
 rag/vaults.json
+rag/routing.json
 scripts/anonymization-patterns.local.txt
 
 # python

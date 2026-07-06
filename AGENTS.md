@@ -5,11 +5,20 @@ repo or in a vault created from `vault-template/`.
 
 ## The contract: unified reading, segregated writing
 
-- **Reading**: all registered vaults are indexed together. Query the RAG
-  server (`POST :8765/search`) for grounded context instead of guessing.
-- **Writing**: every write lands in the domain folder it belongs to
-  (CloudOps, FinOps, DevOps, SecOps, Architecture, Weekly). When unsure,
-  default to the most specific domain and tag the note `needs-routing`.
+- **Reading**: all three vaults (work, ai, user) are indexed together. Query
+  the RAG server (`POST :8765/search`) for grounded context instead of
+  guessing.
+- **Writing**: routed by content type per `rag/routing.json`.
+  - Your own identity, interaction rules, and observations about the
+    collaboration go to the **ai** vault.
+  - Durable facts about the user are staged in the **user** vault `_inbox/`,
+    never written directly into its curated namespaces.
+  - Operational work goes to the **work** vault domain it belongs to
+    (CloudOps, FinOps, DevOps, SecOps, Architecture, Weekly).
+  - When unsure, default to the work vault and tag the note `needs-routing`.
+
+Standing behavioral, git, language, and security policies live in
+`standards/canonical/`. Read them; they govern how you act here.
 
 ## Boundaries
 
@@ -35,9 +44,13 @@ repo or in a vault created from `vault-template/`.
 
 | File | Role |
 |---|---|
-| `vault-template/` | Starter vault: five domains + `_Index/` + `Weekly/` |
+| `vault-template/` | Work vault: five domains + `_Index/` + `Weekly/` |
+| `ai-vault-template/` | AI vault: identity, interaction rules, observations |
+| `user-vault-template/` | User vault: communication, environment, facts, `_inbox/` |
 | `rag/build_index.py` | Incremental indexer: chunk, embed, store |
 | `rag/server.py` | Search server: /health, /search (hybrid + MMR) |
 | `rag/vaults.example.json` | Vault registry template (env-driven paths) |
+| `rag/routing.example.json` | Write-routing contract (unified read, segregated write) |
+| `standards/` | Governance layer: canonical policies, skills, hooks, plugin manifest |
 | `scripts/anonymization-check.sh` | Leak gate: generic patterns + optional local list |
 | `scripts/setup.sh` | One-command bootstrap for a fresh clone |
