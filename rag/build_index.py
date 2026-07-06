@@ -126,12 +126,18 @@ def chunk_markdown(text: str) -> list[tuple[str, str]]:
 def scan_vault(vault: dict) -> dict[str, float]:
     root = vault["resolved_path"]
     excluded = set(vault.get("excluded_dirs", []))
+    exclude_underscore = vault.get("exclude_underscore_prefix", False)
     extensions = tuple(vault.get("extensions", [".md"]))
     found: dict[str, float] = {}
     for path in root.rglob("*"):
         if not path.is_file() or path.suffix not in extensions:
             continue
-        if any(part in excluded or part.startswith("_") for part in path.relative_to(root).parts[:-1]):
+        parent_parts = path.relative_to(root).parts[:-1]
+        if any(part in excluded for part in parent_parts):
+            continue
+        # Underscore-prefixed folders (e.g. _inbox/ staging) stay out of the
+        # index for vaults that opt in; a work vault keeps _Index/ indexed.
+        if exclude_underscore and any(part.startswith("_") for part in parent_parts):
             continue
         found[str(path)] = path.stat().st_mtime
     return found
