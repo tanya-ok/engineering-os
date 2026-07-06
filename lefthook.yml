@@ -1,0 +1,14 @@
+# Git hooks. Install once with: pnpm exec lefthook install
+pre-commit:
+  parallel: true
+  commands:
+    anonymization:
+      run: scripts/anonymization-check.sh staged
+    biome:
+      glob: "*.{js,jsx,ts,tsx,json}"
+      run: npx biome check {staged_files}
+
+pre-push:
+  commands:
+    anonymization-range:
+      run: scripts/anonymization-check.sh range

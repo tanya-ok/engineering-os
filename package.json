@@ -1,0 +1,20 @@
+{
+  "name": "engineering-os",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A personal OS for cloud and infrastructure engineers: vault template + local hybrid RAG + agent conventions",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@10.12.1",
+  "scripts": {
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.2",
+    "lefthook": "^1.11.0"
+  }
+}
