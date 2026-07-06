@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "comment": "Vault registry. Copy to rag/vaults.json and edit. Each entry is one indexable corpus. path_env wins over path_default. Paths support ~ and $VARS. namespace = top-level folder inside the vault.",
+  "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "index_db": "~/.engineering-os/index.db",
+  "vaults": [
+    {
+      "vault_id": "main",
+      "label": "Primary engineering vault",
+      "path_env": "EOS_VAULT_PATH",
+      "path_default": "./vault-template",
+      "excluded_dirs": [".obsidian", ".git", ".trash"],
+      "extensions": [".md"]
+    }
+  ]
+}
