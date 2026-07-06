@@ -23,6 +23,20 @@ knowledge base, wired into AI coding agents.
   (`_Index/Vault Map`, `Active Context`, `Open Loops`) designed to be loaded
   into an agent session as working context.
 
+## The one rule to remember
+
+The line that settles every infra-versus-app argument: infrastructure owns the
+container, developers own the contents.
+
+<p align="center">
+  <a href="https://tanya-ok.github.io/engineering-os/boundary/">
+    <img src="docs/assets/boundary.svg" alt="The container is Infrastructure's; the contents are the developers'" width="820">
+  </a>
+</p>
+
+The database engine is infra; the rows are the app's. The bucket is infra; the
+files in it are the app's. [More on the boundary](https://tanya-ok.github.io/engineering-os/boundary/).
+
 ## Quickstart (15 minutes)
 
 ```sh
