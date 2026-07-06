@@ -56,5 +56,6 @@ nav:
   - The five domains: domains.md
   - The boundary: boundary.md
   - RAG layer: rag.md
+  - Working layer: working-layer.md
   - Standards: standards.md
   - Architecture: architecture.md
