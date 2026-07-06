@@ -19,6 +19,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   Per-vault `exclude_underscore_prefix` keeps `_inbox/` staging out of
   retrieval while indexing `_Index/`.
 - Anonymization gate (lefthook + CI) and gitleaks configuration.
+- Test coverage: unit tests for the chunker, RRF fusion, config path
+  expansion, mtime skip logic, and the dimension guard, plus an end-to-end
+  test (`rag/tests/e2e.rs`) that indexes and searches through the real binary.
+- CI jobs: Rust lint, the full test suite, a `cargo audit` dependency scan,
+  a secret scan, and the anonymization gate.
 - One-command setup script.
 
 ### Notes

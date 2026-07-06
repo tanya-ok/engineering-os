@@ -21,12 +21,18 @@ lefthook install               # installs the pre-commit / pre-push gates (needs
   scratch. Do not paste sanitized copies of real notes; sanitization leaks.
 - **English only** in all committed artifacts.
 - **Lint before pushing.** `cargo fmt --manifest-path rag/Cargo.toml --check`
-  and `cargo clippy --manifest-path rag/Cargo.toml -- -D warnings`.
+  and `cargo clippy --manifest-path rag/Cargo.toml --all-targets -- -D warnings`.
+- **Test.** `cargo test --manifest-path rag/Cargo.toml`. This includes the
+  end-to-end test in `rag/tests/e2e.rs`, which builds the binary and runs a
+  real index and search; its first run downloads the embedding model (needs
+  network once, then cached). Run `cargo test --lib` for just the fast unit
+  tests.
 - Conventional-style commits: `type: Subject` (feat, fix, docs, ci, chore,
   refactor, test, security).
 
 ## Pull requests
 
-CI runs Rust lint (rustfmt + clippy), secret scan, and the anonymization gate
-against the full PR diff. A red anonymization job is never overridden; fix the
-content.
+CI runs, per job: Rust lint (rustfmt + clippy `--all-targets`), the test suite
+(unit + end-to-end), a dependency audit (`cargo audit`), a secret scan, and the
+anonymization gate against the full PR diff. A red anonymization job is never
+overridden; fix the content.
