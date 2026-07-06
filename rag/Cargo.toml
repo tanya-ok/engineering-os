@@ -11,9 +11,9 @@ path = "src/main.rs"
 
 [dependencies]
 fastembed = "5"
-rusqlite = { version = "0.32", features = ["bundled", "functions"] }
+rusqlite = { version = "0.40", features = ["bundled", "functions"] }
 sqlite-vec = "0.1"
-axum = "0.7"
+axum = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -22,7 +22,7 @@ anyhow = "1"
 walkdir = "2"
 
 [dev-dependencies]
-ureq = { version = "2", features = ["json"] }
+ureq = { version = "3", features = ["json"] }
 tempfile = "3"
 
 [profile.release]
