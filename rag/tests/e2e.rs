@@ -119,13 +119,14 @@ fn index_then_serve_then_search() {
 
     // Valid search returns the runbook as the top hit.
     let resp: serde_json::Value = ureq::post(&format!("{base}/search"))
-        .send_json(ureq::json!({
+        .send_json(serde_json::json!({
             "query": "how do I rotate a TLS certificate",
             "top": 3,
             "hybrid": true,
         }))
         .expect("search request failed")
-        .into_json()
+        .body_mut()
+        .read_json()
         .expect("search response was not json");
     let hits = resp["hits"].as_array().expect("hits array");
     assert!(!hits.is_empty(), "expected at least one hit");
@@ -136,12 +137,12 @@ fn index_then_serve_then_search() {
     );
 
     // Empty query is a client error (400), not a silent empty 200.
-    let status = ureq::post(&format!("{base}/search"))
-        .send_json(ureq::json!({ "query": "  " }))
-        .map(|r| r.status())
-        .unwrap_or_else(|e| match e {
-            ureq::Error::Status(code, _) => code,
-            other => panic!("unexpected transport error: {other}"),
-        });
+    let status = match ureq::post(&format!("{base}/search"))
+        .send_json(serde_json::json!({ "query": "  " }))
+    {
+        Ok(r) => r.status().as_u16(),
+        Err(ureq::Error::StatusCode(code)) => code,
+        Err(other) => panic!("unexpected transport error: {other}"),
+    };
     assert_eq!(status, 400, "empty query should be a 400");
 }
