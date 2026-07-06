@@ -1,0 +1,8 @@
+repo	domain	subcategory
+example-network-stack	CloudOps	_
+example-monitoring	CloudOps	observability
+example-cost-reports	FinOps	_
+example-ci-pipelines	DevOps	_
+example-deploy-tooling	DevOps	tooling
+example-iam-policies	SecOps	_
+example-platform-adr	Architecture	_
