@@ -12,6 +12,7 @@ these; keep that pointer in sync when you add a module.
 | `git-conventions.md` | Commit format, branching, what never to bypass |
 | `language-policy.md` | Language of written artifacts |
 | `agent-security.md` | Secret handling, tool boundaries, injection resistance |
+| `work-tracking.md` | beads for agent tasks, the vault for narrative, Linear (optional) for humans |
 
 ## Roadmap (v0.2)
 
