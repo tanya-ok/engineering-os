@@ -1,7 +1,14 @@
 # engineering-os
 
+[![Docs](https://img.shields.io/badge/docs-github%20pages-cyan)](https://tanya-ok.github.io/engineering-os/)
+[![CI](https://github.com/tanya-ok/engineering-os/actions/workflows/ci.yml/badge.svg)](https://github.com/tanya-ok/engineering-os/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.96%2B-orange?logo=rust)](https://www.rust-lang.org/)
+
 A personal OS for cloud and infrastructure engineers: your notes as a queryable
 knowledge base, wired into AI coding agents.
+
+**[Documentation](https://tanya-ok.github.io/engineering-os/)** - quickstart, concepts, and the RAG API.
 
 **What you get from one clone:**
 
