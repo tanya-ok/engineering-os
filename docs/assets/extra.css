@@ -1,0 +1,207 @@
+/* engineering-os custom theme: an "infrastructure terminal" look.
+   Dark, cool near-black canvas; cyan for infrastructure, amber for developers;
+   IBM Plex Mono for system labels. Overrides Material's design tokens. */
+
+:root {
+  --eos-bg: #0b0e14;
+  --eos-surface: #141924;
+  --eos-surface-2: #10141d;
+  --eos-border: #212736;
+  --eos-cyan: #6fd0ee;
+  --eos-cyan-dim: #3f7f92;
+  --eos-amber: #e6ab5e;
+  --eos-text: #c4ccd9;
+  --eos-heading: #eaf0f7;
+  --eos-muted: #6a7488;
+}
+
+/* ---- Dark scheme (the primary look) ---- */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: var(--eos-bg);
+  --md-default-fg-color: var(--eos-text);
+  --md-default-fg-color--light: #97a0b2;
+  --md-default-fg-color--lighter: var(--eos-muted);
+  --md-default-fg-color--lightest: #2a3141;
+
+  --md-primary-fg-color: #0d1017;
+  --md-primary-bg-color: var(--eos-heading);
+  --md-accent-fg-color: var(--eos-amber);
+
+  --md-typeset-color: var(--eos-text);
+  --md-typeset-a-color: var(--eos-cyan);
+  --md-code-bg-color: var(--eos-surface-2);
+  --md-code-fg-color: #d3dae6;
+
+  --md-footer-bg-color: #0d1017;
+  --md-footer-bg-color--dark: #090c11;
+}
+
+/* Headings: tighter, brighter, engineering-flavored */
+[data-md-color-scheme="slate"] .md-typeset h1,
+[data-md-color-scheme="slate"] .md-typeset h2,
+[data-md-color-scheme="slate"] .md-typeset h3 {
+  color: var(--eos-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Section headings get a small monospace cyan tick, like a prompt */
+[data-md-color-scheme="slate"] .md-typeset h2::before {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.5em;
+  border-left: 2px solid var(--eos-cyan);
+  border-bottom: 2px solid var(--eos-cyan);
+  transform: translateY(-0.15em) rotate(-45deg);
+  opacity: 0.7;
+}
+
+/* Header + nav: dark bar, cyan brand */
+.md-header {
+  background-color: #0d1017;
+  border-bottom: 1px solid var(--eos-border);
+}
+.md-header__title,
+.md-header__topic {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: 0.02em;
+}
+[data-md-color-scheme="slate"] .md-tabs {
+  background-color: #0d1017;
+  border-bottom: 1px solid var(--eos-border);
+}
+[data-md-color-scheme="slate"] .md-tabs__link {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  opacity: 0.8;
+}
+[data-md-color-scheme="slate"] .md-tabs__link--active,
+[data-md-color-scheme="slate"] .md-tabs__link:hover {
+  color: var(--eos-cyan);
+  opacity: 1;
+}
+
+/* Code + inline code read like a terminal */
+[data-md-color-scheme="slate"] .md-typeset code,
+[data-md-color-scheme="slate"] .md-typeset pre > code {
+  border: 1px solid var(--eos-border);
+  border-radius: 6px;
+}
+[data-md-color-scheme="slate"] .md-typeset :not(pre) > code {
+  color: var(--eos-amber);
+  background-color: var(--eos-surface-2);
+  padding: 0.1em 0.4em;
+}
+
+/* Tables: quiet grid, cyan header rule */
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  border: 1px solid var(--eos-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background-color: var(--eos-surface);
+  color: var(--eos-heading);
+  border-bottom: 1px solid var(--eos-cyan-dim);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+}
+
+/* Admonitions sit on the surface, not stark white */
+[data-md-color-scheme="slate"] .md-typeset .admonition,
+[data-md-color-scheme="slate"] .md-typeset details {
+  background-color: var(--eos-surface);
+  border-left-width: 3px;
+  border-radius: 8px;
+}
+
+/* Light scheme keeps the accents, stays readable */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #0d1017;
+  --md-primary-bg-color: #f3f6fb;
+  --md-accent-fg-color: #b9762a;
+  --md-typeset-a-color: #1f7f9c;
+}
+
+/* ---------- shared utility: monospace eyebrow label ---------- */
+.eos-eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--eos-muted);
+}
+
+/* =====================================================================
+   Signature component: the ownership-boundary diagram.
+   Nested boxes: Infrastructure (cyan) contains the Application (amber).
+   ===================================================================== */
+.eos-boundary {
+  --c-infra: var(--eos-cyan);
+  --c-dev: var(--eos-amber);
+  border: 1px dashed color-mix(in srgb, var(--c-infra) 45%, transparent);
+  border-radius: 14px;
+  padding: 1.4rem;
+  background: linear-gradient(180deg, rgba(111, 208, 238, 0.04), transparent 60%);
+  margin: 1.5rem 0;
+}
+.eos-layer {
+  border: 1px solid color-mix(in srgb, var(--c-infra) 35%, var(--eos-border));
+  border-radius: 12px;
+  padding: 1.1rem 1.1rem 1.2rem;
+  margin-top: 1rem;
+  background: color-mix(in srgb, var(--c-infra) 6%, var(--eos-surface));
+}
+.eos-layer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+.eos-layer__title {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--c-infra) 80%, white);
+}
+.eos-tag {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.2em 0.7em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c-infra) 55%, transparent);
+  color: color-mix(in srgb, var(--c-infra) 85%, white);
+}
+.eos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.eos-chips span {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  padding: 0.32em 0.7em;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--c-infra) 40%, var(--eos-border));
+  color: var(--eos-text);
+  background: var(--eos-surface-2);
+}
+/* the inner Application layer flips to the developer accent */
+.eos-layer--dev {
+  --c-infra: var(--c-dev);
+}
+.eos-note {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eos-muted);
+}

@@ -1,0 +1,15 @@
+# Git hooks. Install once with: lefthook install
+# (lefthook is a standalone binary: brew install lefthook, or see lefthook.dev)
+pre-commit:
+  parallel: true
+  commands:
+    anonymization:
+      run: scripts/anonymization-check.sh staged
+    biome:
+      glob: "rag/**/*.{ts,json}"
+      run: pnpm --dir rag exec biome check .
+
+pre-push:
+  commands:
+    anonymization-range:
+      run: scripts/anonymization-check.sh range

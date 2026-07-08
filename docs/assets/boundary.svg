@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 500" font-family="'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace">
+  <defs>
+    <style>
+      .bg { fill: #0b0e14; }
+      .infra { stroke: #6fd0ee; }
+      .dev { stroke: #e6ab5e; }
+      .lbl-infra { fill: #9fe0f4; }
+      .lbl-dev { fill: #f0c68a; }
+      .muted { fill: #6a7488; }
+      .chip-t { fill: #c4ccd9; }
+      .rule { fill: #c4ccd9; }
+      .rule-i { fill: #6fd0ee; }
+      .rule-d { fill: #e6ab5e; }
+      text { font-size: 15px; }
+      .title { font-size: 15px; letter-spacing: 1px; }
+      .tag { font-size: 12px; letter-spacing: 1.5px; }
+      .chip { font-size: 12.5px; }
+      .note { font-size: 11px; letter-spacing: 1.5px; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="820" height="500" rx="14"/>
+
+  <!-- caption -->
+  <text class="rule" x="30" y="34" font-size="17">
+    <tspan class="rule-i" font-weight="600">The container is Infrastructure's;</tspan>
+    <tspan class="rule-d" font-weight="600"> the contents are the developers'.</tspan>
+  </text>
+
+  <!-- outer: infrastructure boundary (dashed) -->
+  <rect class="infra" x="24" y="58" width="772" height="416" rx="16" fill="#6fd0ee" fill-opacity="0.03" stroke-opacity="0.5" stroke-width="1.5" stroke-dasharray="6 6"/>
+
+  <!-- infrastructure layer -->
+  <rect class="infra" x="44" y="80" width="732" height="374" rx="13" fill="#6fd0ee" fill-opacity="0.05" stroke-opacity="0.4" stroke-width="1.3"/>
+  <text class="title lbl-infra" x="66" y="112">AWS  ·  CLOUD  ·  NETWORK  ·  PLATFORM</text>
+  <rect class="infra" x="596" y="94" width="160" height="26" rx="13" fill="none" stroke-opacity="0.6"/>
+  <text class="tag lbl-infra" x="614" y="111">INFRASTRUCTURE</text>
+  <text class="note muted" x="66" y="134">EVERYTHING INSIDE THE CLOUD ACCOUNT</text>
+
+  <!-- infra chips -->
+  <g class="chip-t">
+    <rect class="infra" x="66"  y="150" width="118" height="28" rx="7" fill="#10141d" stroke-opacity="0.35"/><text class="chip" x="80"  y="169">VPC / subnets</text>
+    <rect class="infra" x="196" y="150" width="132" height="28" rx="7" fill="#10141d" stroke-opacity="0.35"/><text class="chip" x="210" y="169">load balancer</text>
+    <rect class="infra" x="340" y="150" width="58"  height="28" rx="7" fill="#10141d" stroke-opacity="0.35"/><text class="chip" x="354" y="169">DNS</text>
+    <rect class="infra" x="410" y="150" width="60"  height="28" rx="7" fill="#10141d" stroke-opacity="0.35"/><text class="chip" x="424" y="169">CDN</text>
+    <rect class="infra" x="482" y="150" width="200" height="28" rx="7" fill="#10141d" stroke-opacity="0.35"/><text class="chip" x="496" y="169">secret &amp; parameter wiring</text>
+    <rect class="infra" x="66"  y="188" width="188" height="28" rx="7" fill="#10141d" stroke-opacity="0.35"/><text class="chip" x="80"  y="207">object storage (bucket)</text>
+    <rect class="infra" x="266" y="188" width="100" height="28" rx="7" fill="#10141d" stroke-opacity="0.35"/><text class="chip" x="280" y="207">DB engine</text>
+    <rect class="infra" x="378" y="188" width="92"  height="28" rx="7" fill="#10141d" stroke-opacity="0.35"/><text class="chip" x="392" y="207">pipelines</text>
+    <rect class="infra" x="482" y="188" width="102" height="28" rx="7" fill="#10141d" stroke-opacity="0.35"/><text class="chip" x="496" y="207">monitoring</text>
+  </g>
+
+  <!-- server/host/os (still infra) -->
+  <rect class="infra" x="66" y="234" width="688" height="200" rx="12" fill="#6fd0ee" fill-opacity="0.04" stroke-opacity="0.3" stroke-width="1.2"/>
+  <text class="title lbl-infra" x="88" y="266">SERVER  ·  HOST  ·  OS</text>
+  <text class="note muted" x="630" y="266">STILL INFRA</text>
+
+  <!-- application layer (developers, amber) -->
+  <rect class="dev" x="88" y="286" width="644" height="128" rx="11" fill="#e6ab5e" fill-opacity="0.05" stroke-opacity="0.5" stroke-width="1.3"/>
+  <text class="title lbl-dev" x="110" y="318">APPLICATION</text>
+  <rect class="dev" x="596" y="300" width="118" height="26" rx="13" fill="none" stroke-opacity="0.65"/>
+  <text class="tag lbl-dev" x="612" y="317">DEVELOPERS</text>
+
+  <!-- dev chips -->
+  <g class="chip-t">
+    <rect class="dev" x="110" y="336" width="120" height="28" rx="7" fill="#141018" stroke-opacity="0.4"/><text class="chip" x="124" y="355">business logic</text>
+    <rect class="dev" x="242" y="336" width="118" height="28" rx="7" fill="#141018" stroke-opacity="0.4"/><text class="chip" x="256" y="355">API / resolvers</text>
+    <rect class="dev" x="372" y="336" width="176" height="28" rx="7" fill="#141018" stroke-opacity="0.4"/><text class="chip" x="386" y="355">rows in the database</text>
+    <rect class="dev" x="110" y="374" width="182" height="28" rx="7" fill="#141018" stroke-opacity="0.4"/><text class="chip" x="124" y="393">files inside the bucket</text>
+    <rect class="dev" x="304" y="374" width="196" height="28" rx="7" fill="#141018" stroke-opacity="0.4"/><text class="chip" x="318" y="393">secret &amp; parameter values</text>
+  </g>
+</svg>

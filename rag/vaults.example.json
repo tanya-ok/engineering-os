@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "comment": "Vault registry. Copy to rag/vaults.json and edit. Reading is unified: every vault here is indexed into one database. Writing is governed by rag/routing.json. path_env wins over path_default; paths support ~ and $VARS. exclude_underscore_prefix keeps _inbox/-style staging folders out of retrieval. Diode guardrail: every vault path must live under one of allowed_roots (default: the repo root containing this file); iCloud paths are always refused.",
+  "embed_model": "intfloat/multilingual-e5-small",
+  "index_db": "~/.engineering-os/index.db",
+  "vaults": [
+    {
+      "vault_id": "work",
+      "label": "Work knowledge (five infrastructure domains)",
+      "path_env": "EOS_VAULT_PATH",
+      "path_default": "./vault-template",
+      "excluded_dirs": [".obsidian", ".git", ".trash"],
+      "exclude_underscore_prefix": false,
+      "extensions": [".md"]
+    },
+    {
+      "vault_id": "ai",
+      "label": "Agent self-knowledge and interaction rules",
+      "path_env": "EOS_AI_VAULT_PATH",
+      "path_default": "./ai-vault-template",
+      "excluded_dirs": [".obsidian", ".git", ".trash"],
+      "exclude_underscore_prefix": true,
+      "extensions": [".md"]
+    },
+    {
+      "vault_id": "user",
+      "label": "User model: communication style, environment, facts",
+      "path_env": "EOS_USER_VAULT_PATH",
+      "path_default": "./user-vault-template",
+      "excluded_dirs": [".obsidian", ".git", ".trash"],
+      "exclude_underscore_prefix": true,
+      "extensions": [".md"]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "engineering-os",
+  "owner": "YOUR_USER",
+  "plugins": [
+    {
+      "name": "engineering-os",
+      "source": "./",
+      "description": "Canonical policies, skills, and hooks for the engineering-os working environment"
+    }
+  ]
+}
