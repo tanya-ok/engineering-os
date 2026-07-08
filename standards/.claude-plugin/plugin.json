@@ -1,0 +1,16 @@
+{
+  "name": "engineering-os",
+  "version": "0.1.0",
+  "description": "Governance layer for engineering-os: canonical policies, skills, and lifecycle hooks for an infrastructure engineer's AI working environment",
+  "author": "engineering-os contributors",
+  "license": "MIT",
+  "homepage": "https://github.com/YOUR_USER/engineering-os",
+  "repository": "https://github.com/YOUR_USER/engineering-os",
+  "keywords": [
+    "obsidian",
+    "claude-code",
+    "rag",
+    "infrastructure",
+    "developer-tools"
+  ]
+}
