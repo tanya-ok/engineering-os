@@ -1,0 +1,32 @@
+# env and local config
+.env
+rag/vaults.json
+rag/routing.json
+scripts/anonymization-patterns.local.txt
+
+# project workspace and its manifest (your repos, not part of the kit)
+projects.tsv
+/engineering-os-workspace/
+
+# node
+node_modules/
+rag/dist/
+
+# downloaded embedding model cache (fallback location if EOS_MODEL_CACHE unset
+# and an older build wrote here)
+
+# mkdocs build output
+site/
+
+# index artifacts
+*.db
+*.db-journal
+
+# editors / os
+.DS_Store
+.idea/
+.vscode/
+
+# obsidian workspace state (keep vault-template/.obsidian minimal and committed)
+vault-template/.obsidian/workspace*.json
+vault-template/.obsidian/cache

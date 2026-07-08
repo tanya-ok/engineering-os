@@ -1,0 +1,32 @@
+# Gitleaks config: default ruleset plus identity-leak rules for a repo
+# whose content must stay machine-agnostic and employer-agnostic.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "personal-home-path"
+description = "Absolute home directory path committed"
+regex = '''/Users/[a-z0-9_-]+/|/home/[a-z0-9_-]+/'''
+path = '''.*'''
+
+[[rules]]
+id = "onepassword-secret-reference"
+description = "1Password op:// secret reference"
+regex = '''op://[A-Za-z0-9._/-]+'''
+
+[[rules]]
+id = "icloud-vault-path"
+description = "iCloud Obsidian vault path"
+regex = '''Mobile Documents/iCloud~md~obsidian'''
+
+[allowlist]
+description = "Documented placeholders"
+paths = [
+    '''\.gitleaks\.toml''',
+    '''scripts/anonymization-check\.sh''',
+]
+regexes = [
+    '''YOUR_USER''',
+    '''example\.com''',
+]

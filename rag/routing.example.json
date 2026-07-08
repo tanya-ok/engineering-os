@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "comment": "Write-routing contract for any agent working in engineering-os (Claude Code, local LLMs, MCP clients). Reading is unified: every vault in vaults.json is indexed together for retrieval. Writing is segregated by content type. vault_id values match vaults.json. Copy to rag/routing.json to activate.",
+  "routes": [
+    {
+      "content_type": "agent-self",
+      "description": "The agent's own identity, its rules for working with this user, and its observations about the collaboration.",
+      "vault_id": "ai",
+      "folders": {
+        "identity": "identity/",
+        "interaction-rule": "interaction-rules/",
+        "observation": "observations/"
+      },
+      "filename_pattern": "YYYY-MM-DD-<slug>.md",
+      "rules": [
+        "identity/ files define who the agent is in this working relationship. Edit them only when the change IS an identity change, not as a session log.",
+        "Routine notes about how a session went, patterns noticed, or corrections received go to observations/."
+      ]
+    },
+    {
+      "content_type": "user-facts",
+      "description": "Durable facts about the user: communication style, local environment, stances. Not events, not tasks, not the mood of the day.",
+      "vault_id": "user",
+      "folders": {
+        "candidate": "_inbox/"
+      },
+      "filename_pattern": "YYYY-MM-DD-<slug>.md",
+      "rules": [
+        "Agents NEVER write directly into communication/, environment/, or facts/. Those namespaces are curated.",
+        "Stage new material in _inbox/ with frontmatter: type: candidate-fact, source: <where it surfaced>, evidence: <verbatim quote or reference>.",
+        "The underscore prefix keeps _inbox/ out of retrieval until a human promotes the note into a curated namespace."
+      ]
+    },
+    {
+      "content_type": "operational",
+      "description": "Work knowledge: runbooks, cost reviews, pipelines, controls, ADRs, weekly reviews.",
+      "vault_id": "work",
+      "folders": {
+        "cloudops": "CloudOps/",
+        "finops": "FinOps/",
+        "devops": "DevOps/",
+        "secops": "SecOps/",
+        "architecture": "Architecture/",
+        "weekly": "Weekly/"
+      },
+      "rules": [
+        "Route to the most specific domain. New architecture decisions go to Architecture/decisions/ as sequentially numbered ADRs.",
+        "A durable fact about the user that surfaces in an operational note is ALSO staged to the user vault _inbox/ as a separate candidate; the operational note stays in the work vault."
+      ]
+    }
+  ],
+  "decision_order": [
+    "1. Is it the agent's own identity or a note about the collaboration? Route to the ai vault.",
+    "2. Is it a durable fact about the user, independent of today's events? Stage in the user vault _inbox/.",
+    "3. Is it dated, actionable, or bound to a work domain? Route to the work vault.",
+    "4. Unsure? Default to the work vault and tag the note needs-routing."
+  ]
+}

@@ -1,0 +1,3 @@
+# Documentation tooling only. Separate from the Rust runtime; used to build the
+# docs site locally (mkdocs serve) and in CI (mkdocs build --strict).
+mkdocs-material>=9.6,<10
