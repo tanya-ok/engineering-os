@@ -30,9 +30,7 @@ Two design choices define the rest of the system:
   whole thing works offline on a laptop.
 - **A lean TypeScript service.** The RAG layer is a small Node.js package
   (built once with tsc, run with plain node), so the heaviest dependency of
-  the earlier prototype (a multi-gigabyte PyTorch install) is gone. It was
-  first shipped as a Rust binary and later ported to TypeScript to match the
-  rest of the toolchain.
+  the earlier prototype (a multi-gigabyte PyTorch install) is gone.
 
 Write a new ADR whenever a decision carries a real trade-off. If you argued
 about it for more than ten minutes, it deserves a record.

@@ -6,9 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
 ## [Unreleased]
 
 ### Changed
-- RAG layer rewritten from Rust to TypeScript (`rag/`, still `eos-rag`):
-  transformers.js (ONNX, quantized) replaces fastembed, Hono replaces axum,
-  better-sqlite3 + sqlite-vec replace rusqlite. The CLI verbs, `vaults.json`
+- RAG layer rewritten in TypeScript (`rag/`, still `eos-rag`):
+  transformers.js (ONNX, quantized) for embeddings, Hono for the HTTP server,
+  better-sqlite3 + sqlite-vec for storage. The CLI verbs, `vaults.json`
   schema, and `/search` response contract are unchanged. New in the port:
   default model `intfloat/multilingual-e5-small` with automatic e5
   `passage:`/`query:` prefixes, trigram FTS5 for Cyrillic lexical search
@@ -42,6 +42,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
 ### Notes
 - An earlier Python prototype (sentence-transformers + FastAPI) was replaced
   before the first release to drop the PyTorch install from onboarding; the
-  Rust implementation that replaced it was in turn ported to TypeScript (see
-  Changed above). The index format, `vaults.json` config, and `/search`
-  contract survived both rewrites.
+  compiled-binary implementation that replaced it was in turn rewritten in
+  TypeScript (see Changed above). The index format, `vaults.json` config, and
+  `/search` contract survived both rewrites.
