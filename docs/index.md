@@ -23,9 +23,12 @@ knowledge base, wired into AI coding agents. Everything runs locally.
   writing, and the hybrid retrieval pipeline.
 - [The five domains](domains.md) - how the work vault is organized.
 - [RAG layer](rag.md) - the `eos-rag` service, its search API, and model choice.
+- [Working layer](working-layer.md) - beads for agent tasks, the vault for narrative.
 - [Standards](standards.md) - the governance layer and how it is distributed.
 - [Architecture](architecture.md) - the decisions behind the design.
 
 !!! note "Status"
-    v0.1. The vault template and the RAG layer (TypeScript) are in place;
-    skills, hooks, beads integration, and this docs site are landing next.
+    v0.1. The vault template, the TypeScript RAG layer, the standards layer with
+    the `plan` and `clone-projects` skills, work-tracking (beads Phase A), and
+    this docs site are all in place. Claude Code hooks and the Linear/planning
+    phases of the working layer come next.
