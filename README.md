@@ -132,12 +132,25 @@ The first index run downloads the embedding model
 retrieval works out of the box); `rag/vaults.json` can swap it for
 `all-MiniLM-L6-v2` or a larger `multilingual-e5-*`.
 
-## Roadmap
+## Status
 
-- v0.1: vault template + local RAG layer (this)
-- v0.2: Claude Code skills and hooks (session context loader, weekly review, ADR scaffolder)
-- v0.3: beads task-graph integration for agent work tracking
-- v0.4: docs site (MkDocs Material, GitHub Pages)
+Shipped in v0.1:
+
+- Three-vault template (work, ai, user) with a write-routing contract and the
+  diode guardrail that keeps personal data out of a work-side index.
+- Local hybrid RAG layer (TypeScript): transformers.js embeddings,
+  SQLite + sqlite-vec + FTS5, RRF fusion with optional MMR, multilingual by default.
+- Standards governance layer: canonical policies, the `plan` and
+  `clone-projects` skills, and a plugin manifest.
+- Work tracking (beads Phase A): the `work-tracking` conventions plus the `plan`
+  skill that shows ready tasks next to the vault's open loops.
+- A docs site (MkDocs Material) on GitHub Pages with a custom theme.
+
+Next:
+
+- Claude Code hooks (session context loader, secret scan, session-end log).
+- Work tracking Phase B/C: a Linear adapter and planning skills.
+- Release automation.
 
 ## License
 
