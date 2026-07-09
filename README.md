@@ -134,7 +134,7 @@ retrieval works out of the box); `rag/vaults.json` can swap it for
 
 ## Roadmap
 
-- v0.1: vault template + local RAG layer (this; ported from Rust to TypeScript)
+- v0.1: vault template + local RAG layer (this)
 - v0.2: Claude Code skills and hooks (session context loader, weekly review, ADR scaffolder)
 - v0.3: beads task-graph integration for agent work tracking
 - v0.4: docs site (MkDocs Material, GitHub Pages)
