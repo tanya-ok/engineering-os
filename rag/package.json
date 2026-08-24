@@ -19,10 +19,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@hono/node-server": "2.0.8",
+    "@hono/node-server": "2.1.1",
     "@huggingface/transformers": "4.2.0",
-    "better-sqlite3": "12.11.1",
-    "hono": "4.12.28",
+    "better-sqlite3": "13.0.3",
+    "hono": "4.13.3",
     "sqlite-vec": "0.1.9"
   },
   "pnpm": {
@@ -33,10 +33,10 @@
     ]
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.3",
-    "@types/better-sqlite3": "7.6.13",
-    "@types/node": "26.1.1",
+    "@biomejs/biome": "2.5.9",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "26.2.0",
     "typescript": "7.0.2",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   }
 }
