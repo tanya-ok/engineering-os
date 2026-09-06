@@ -29,9 +29,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   the workflow now set `onnxruntime-node-install=skip` (CPU-only embeddings).
 
 ### Changed
+- Update `@types/node` to 26.4.1 in both packages; runtime minimum and CI
+  remain on Node 24.
 - Update the pinned Pages deployment action to 5.0.1.
 - `rag/` dependency refresh: better-sqlite3 13, vitest 5, Biome 2.5.12,
-  `@types/node` pinned to the Node 24 LTS line, pnpm 10.34.5. Pinned GitHub
+  pnpm 10.34.5. Pinned GitHub
   Actions bumped (checkout 7.0.1, setup-node 7.0.0, setup-python 7.0.0,
   pnpm/action-setup 6.0.10).
 - RAG layer rewritten in TypeScript (`rag/`, still `eos-rag`):

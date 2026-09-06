@@ -35,3 +35,6 @@ above remain template content.
   no history rewrite or publication was performed.
 - RAG was unavailable during the audit; live personal vault setup remains
   `eos-t61`. Do not interpret template examples as live infrastructure facts.
+
+- `eos-byn` completed: both packages use `@types/node` 26.4.1; typecheck,
+  build, lint and unit tests pass. Runtime minimum and CI remain Node 24.

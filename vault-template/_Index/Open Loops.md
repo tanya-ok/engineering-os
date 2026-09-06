@@ -22,3 +22,6 @@ omit owner email fields; review exports before publishing.
 | eos-62h | Validate beads semantics and improve daily dashboard navigation |
 | eos-t61 | Configure and restore personal project memory |
 | eos-cw8 | Evaluate retrieval budgets and MCP after project memory is available |
+
+Completed: `eos-byn` updated Node type definitions to 26.4.1 in both packages;
+verification passed with no new dependency audit findings.
