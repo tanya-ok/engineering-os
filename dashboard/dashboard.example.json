@@ -1,0 +1,13 @@
+{
+  "comment": "Local overlay for eos-dashboard. Copy to dashboard/dashboard.json (gitignored). Every field is optional. beads_root: workspace with a .beads directory (bd export runs there). jsonl: a bd export file instead. projects: display metadata per id prefix; label and url reach the browser, path stays server-side. external_ref_url: template with {ref}.",
+  "beads_root": "~/work/workspace",
+  "ttl_seconds": 30,
+  "external_ref_url": "https://tracker.example/issue/{ref}",
+  "projects": {
+    "harbor-gps": {
+      "label": "Harbor GPS",
+      "path": "~/work/workspace/gps",
+      "url": "https://example.com/harbor"
+    }
+  }
+}

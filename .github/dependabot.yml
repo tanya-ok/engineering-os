@@ -7,6 +7,13 @@ updates:
     groups:
       npm-all:
         patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /dashboard
+    schedule:
+      interval: weekly
+    groups:
+      npm-all:
+        patterns: ["*"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
