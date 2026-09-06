@@ -1,0 +1,49 @@
+{
+  "name": "eos-dashboard",
+  "version": "0.1.0",
+  "description": "Work-graph dashboard for engineering-os: beads issues by project, dependencies, ready queue",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "eos-dashboard": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node build.mjs",
+    "build:web": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "serve": "node dist/cli.js serve"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "hono": "4.13.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "@types/d3": "7.4.3",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "d3": "7.9.0",
+    "esbuild": "0.28.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ],
+    "overrides": {
+      "postcss": ">=8.5.23"
+    }
+  }
+}

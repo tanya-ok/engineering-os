@@ -12,6 +12,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   overrides that lift the transitive sharp (libvips CVEs), adm-zip (4 GB
   allocation) and postcss (source-map path traversal) to patched versions.
 
+### Added
+- Work-graph dashboard (`dashboard/`, `eos-dashboard`): a local Hono API plus
+  a React and d3 browser app over `bd export`. Issues grouped by project (the
+  id prefix), `blocks` / `parent-child` / `discovered-from` / `relates_to`
+  edges, per-project counts, the ready queue, and a detail panel. Ships with an
+  anonymized fixture; the private wiring lives in a gitignored
+  `dashboard/dashboard.json` (see `dashboard.example.json`).
+
 ### Fixed
 - CI `test` job no longer times out: onnxruntime-node's postinstall tried to
   download CUDA binaries from NuGet on every Linux install. `rag/.npmrc` and

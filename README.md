@@ -21,6 +21,8 @@ knowledge base, wired into AI coding agents.
 - ADR scaffolding, weekly review structure, and an index layer
   (`_Index/Vault Map`, `Active Context`, `Open Loops`) designed to be loaded
   into an agent session as working context.
+- A local **work-graph dashboard** over beads: issues by project, dependency
+  edges, and the ready queue, read-only through `bd export`.
 
 ## The one rule to remember
 
@@ -101,6 +103,22 @@ vault's domains. The vaults stay plain markdown, editable in Obsidian.
 | **ai** (`ai-vault-template/`) | The agent's identity, learned interaction rules, observations | So a correction you give once survives to the next session |
 | **user** (`user-vault-template/`) | Your communication style, local environment, stable facts | So the agent matches you instead of guessing |
 
+## The work-graph dashboard
+
+`dashboard/` (`eos-dashboard`) renders the beads task graph in a browser:
+issues grouped by project (the id prefix), `blocks` / `parent-child` /
+`discovered-from` edges, per-project counts, and the ready queue.
+
+```sh
+pnpm --dir dashboard install && pnpm --dir dashboard run build
+node dashboard/dist/cli.js serve --fixture          # anonymized sample data on :8766
+node dashboard/dist/cli.js serve --root ~/workspace # a real .beads workspace
+```
+
+The repository ships only an anonymized fixture; the private wiring (workspace
+path, project labels and links) lives in a gitignored `dashboard/dashboard.json`.
+See [the dashboard docs](https://tanya-ok.github.io/engineering-os/dashboard/).
+
 ## The standards layer
 
 `standards/` is the governance layer, kept separate from the vaults: canonical
@@ -144,6 +162,8 @@ Shipped in v0.1:
   `clone-projects` skills, and a plugin manifest.
 - Work tracking (beads Phase A): the `work-tracking` conventions plus the `plan`
   skill that shows ready tasks next to the vault's open loops.
+- Work-graph dashboard (`dashboard/`): the beads graph by project, ready queue,
+  and a private overlay kept out of the repo.
 - A docs site (MkDocs Material) on GitHub Pages with a custom theme.
 
 Next:

@@ -57,5 +57,6 @@ nav:
   - The boundary: boundary.md
   - RAG layer: rag.md
   - Working layer: working-layer.md
+  - Work-graph dashboard: dashboard.md
   - Standards: standards.md
   - Architecture: architecture.md

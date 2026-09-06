@@ -49,6 +49,8 @@ Standing behavioral, git, language, and security policies live in
 | `user-vault-template/` | User vault: communication, environment, facts, `_inbox/` |
 | `rag/` | TypeScript RAG layer: `eos-rag` CLI (index + serve), transformers.js + sqlite-vec |
 | `rag/src/` | indexer, search server (/health, /search hybrid + MMR), config, chunker |
+| `dashboard/` | Work-graph dashboard: `eos-dashboard` CLI (serve, graph), Hono API over `bd export`, React + d3 app |
+| `dashboard/dashboard.json` | Private overlay (gitignored): workspace path, project labels and links. Never commit it. |
 | `rag/vaults.example.json` | Vault registry template (env-driven paths) |
 | `rag/routing.example.json` | Write-routing contract (unified read, segregated write) |
 | `standards/` | Governance layer: canonical policies, skills, hooks, plugin manifest |

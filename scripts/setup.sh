@@ -24,6 +24,10 @@ echo "Installing and building the RAG layer (first run downloads dependencies)..
 pnpm --dir rag install
 pnpm --dir rag run build
 
+echo "Installing and building the work-graph dashboard..."
+pnpm --dir dashboard install
+pnpm --dir dashboard run build
+
 if [ ! -f .env ]; then
   cp .env.example .env
   echo "Created .env from .env.example (defaults work for the demo vaults)."
@@ -43,6 +47,7 @@ echo ""
 echo "Next steps (run from the repo root):"
 echo "  node rag/dist/cli.js index --config rag/vaults.json   # build the index (first run downloads the model)"
 echo "  node rag/dist/cli.js serve --config rag/vaults.json   # start search on :8765"
+echo "  node dashboard/dist/cli.js serve --fixture             # work-graph dashboard on :8766"
 echo "  open vault-template/ in Obsidian and make it yours"
 echo ""
 echo "Optional: install the git hooks (needs lefthook: brew install lefthook)"

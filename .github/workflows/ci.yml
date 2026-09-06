@@ -15,37 +15,43 @@ env:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [rag, dashboard]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
-          package_json_file: rag/package.json
+          package_json_file: ${{ matrix.package }}/package.json
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: rag/pnpm-lock.yaml
-      - run: pnpm --dir rag install --frozen-lockfile
-      - run: pnpm --dir rag exec biome ci .
-      - run: pnpm --dir rag exec tsc --noEmit
+          cache-dependency-path: ${{ matrix.package }}/pnpm-lock.yaml
+      - run: pnpm --dir ${{ matrix.package }} install --frozen-lockfile
+      - run: pnpm --dir ${{ matrix.package }} exec biome ci .
+      - run: pnpm --dir ${{ matrix.package }} run typecheck
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [rag, dashboard]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
-          package_json_file: rag/package.json
+          package_json_file: ${{ matrix.package }}/package.json
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: rag/pnpm-lock.yaml
-      - run: pnpm --dir rag install --frozen-lockfile
-      # Unit tests only. The end-to-end suite (EOS_E2E=1) downloads the
+          cache-dependency-path: ${{ matrix.package }}/pnpm-lock.yaml
+      - run: pnpm --dir ${{ matrix.package }} install --frozen-lockfile
+      # Unit tests only. The rag end-to-end suite (EOS_E2E=1) downloads the
       # embedding model and is run locally, not in CI.
-      - run: pnpm --dir rag run build
-      - run: pnpm --dir rag test
+      - run: pnpm --dir ${{ matrix.package }} run build
+      - run: pnpm --dir ${{ matrix.package }} test
 
   anonymization:
     runs-on: ubuntu-latest
