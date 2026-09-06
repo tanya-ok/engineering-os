@@ -15,7 +15,7 @@ node dashboard/dist/cli.js serve --root ~/path/to/workspace  # your .beads works
 ```
 
 Open http://127.0.0.1:8766. With no flag the source is resolved from
-`EOS_BEADS_JSONL` / `EOS_BEADS_ROOT`, then `dashboard/dashboard.json`, then a
+`EOS_BEADS_JSONL` / `EOS_BEADS_ROOT`, then an explicit `--config` file, then a
 `.beads` directory in the current directory, then the shipped fixture.
 
 ## What a project is
@@ -60,3 +60,8 @@ browser. Paths and the workspace location stay server-side, and the server
 binds `127.0.0.1` unless told otherwise. The full API is documented in
 `dashboard/README.md`; `eos-dashboard graph` prints the same graph as JSON
 for agents and scripts.
+
+Private overlays are loaded only with `--config dashboard/dashboard.json`.
+`--fixture` ignores overlays, including an explicitly supplied config, so demo
+labels and links cannot come from a private workspace. Health and source errors
+expose source kinds, not filesystem paths.

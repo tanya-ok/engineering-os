@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { expandPath, loadDashboardConfig, publicConfig } from "./config.js";
+import { expandPath, loadDashboardConfig, publicConfig, runtimeConfig } from "./config.js";
 
 let dir = "";
 beforeEach(() => {
@@ -28,11 +28,11 @@ describe("loadDashboardConfig", () => {
   it("expands ~ and $VARS in paths", () => {
     const cfg = loadDashboardConfig(
       write({ beads_root: "~/work", jsonl: "$WS/export.jsonl", projects: { p: { path: "~/p" } } }),
-      { HOME: "/home/sample", WS: "/data" },
+      { HOME: "/data/sample", WS: "/data" },
     );
-    expect(cfg.beads_root).toBe("/home/sample/work");
+    expect(cfg.beads_root).toBe("/data/sample/work");
     expect(cfg.jsonl).toBe("/data/export.jsonl");
-    expect(cfg.projects?.p?.path).toBe("/home/sample/p");
+    expect(cfg.projects?.p?.path).toBe("/data/sample/p");
   });
 
   it("rejects malformed JSON and wrong field types", () => {
@@ -46,7 +46,7 @@ describe("loadDashboardConfig", () => {
     const pub = publicConfig({
       beads_root: "/private/workspace",
       external_ref_url: "https://tracker.example/{ref}",
-      projects: { p: { label: "P", url: "https://example.com/p" } },
+      projects: { p: { label: "P", url: "https://example.com/p", path: "/private/project" } },
     });
     expect(pub).toEqual({
       external_ref_url: "https://tracker.example/{ref}",
@@ -59,6 +59,18 @@ describe("loadDashboardConfig", () => {
 describe("expandPath", () => {
   it("leaves unknown variables untouched and resolves the result", () => {
     expect(expandPath("/x/$NOPE/y", {})).toBe("/x/$NOPE/y");
-    expect(expandPath("~", { HOME: "/home/sample" })).toBe("/home/sample");
+    expect(expandPath("~", { HOME: "/data/sample" })).toBe("/data/sample");
+  });
+});
+
+describe("runtimeConfig", () => {
+  it("does not load an implicit overlay", () => {
+    expect(runtimeConfig(false)).toEqual({});
+  });
+  it("ignores even an explicitly selected invalid private config in demo mode", () => {
+    expect(runtimeConfig(true, write("{private-invalid"))).toEqual({});
+  });
+  it("loads an explicitly selected workspace overlay", () => {
+    expect(runtimeConfig(false, write({ beads_root: "/data/work" })).beads_root).toBe("/data/work");
   });
 });

@@ -56,3 +56,10 @@ Standing behavioral, git, language, and security policies live in
 | `standards/` | Governance layer: canonical policies, skills, hooks, plugin manifest |
 | `scripts/anonymization-check.sh` | Leak gate: generic patterns + optional local list |
 | `scripts/setup.sh` | One-command bootstrap for a fresh clone |
+
+## Repository task isolation
+
+Track this kit's maintenance in its own `.beads/` database (prefix `eos`).
+Verify `bd context` before mutations; never use another workspace tracker
+for personal project tasks. Keep runtime databases private and review portable
+`.beads/issues.jsonl` exports, omitting owner email fields before publication.

@@ -6,6 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
 ## [Unreleased]
 
 ### Security
+- Require explicit dashboard overlays and ignore them in demo mode. Remove
+  filesystem paths and raw source errors from browser-facing responses.
+- Harden the anonymization gate and add redacted secret scanning to CI.
 - Closed the open Dependabot alerts in `rag/`: hono 4.13.7 (CORS ReDoS,
   language-middleware DoS, proxy `Connection` header, `memo()` cross-request
   leak), @hono/node-server 2.1.1 (WebSocket-abort memory leak), and pnpm
@@ -26,6 +29,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   the workflow now set `onnxruntime-node-install=skip` (CPU-only embeddings).
 
 ### Changed
+- Update the pinned Pages deployment action to 5.0.1.
 - `rag/` dependency refresh: better-sqlite3 13, vitest 5, Biome 2.5.12,
   `@types/node` pinned to the Node 24 LTS line, pnpm 10.34.5. Pinned GitHub
   Actions bumped (checkout 7.0.1, setup-node 7.0.0, setup-python 7.0.0,

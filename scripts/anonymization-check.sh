@@ -6,8 +6,8 @@
 #
 # Usage:
 #   scripts/anonymization-check.sh staged   # pre-commit: staged diff
-#   scripts/anonymization-check.sh range    # pre-push / CI: diff vs origin/main
-#   scripts/anonymization-check.sh all      # full working tree scan
+#   scripts/anonymization-check.sh range    # pre-push / CI: commits not on origin/main
+#   scripts/anonymization-check.sh all      # tracked and nonignored untracked files
 set -euo pipefail
 
 MODE="${1:-all}"
@@ -27,57 +27,87 @@ BUILTIN_PATTERNS=(
 
 LOCAL_LIST="scripts/anonymization-patterns.local.txt"
 
+SCAN_DIR="$(mktemp -d "${TMPDIR:-/tmp}/eos-anonymization.XXXXXX")"
+trap 'rm -rf "$SCAN_DIR"' EXIT
+CONTENT="$SCAN_DIR/content"
+MATCHES="$SCAN_DIR/matches"
+
+collect_all() {
+  git ls-files --cached --others --exclude-standard -z -- . "${EXCLUDES[@]}" > "$SCAN_DIR/files" || return
+  while IFS= read -r -d '' f; do
+    [ -f "$f" ] || continue
+    printf '%s\n' "$f"
+    cat -- "$f" || return
+    printf '\n'
+  done < "$SCAN_DIR/files"
+}
+
 collect_content() {
   case "$MODE" in
     staged)
-      git diff --cached -U0 -- . "${EXCLUDES[@]}" | grep '^+' || true
+      git -c color.ui=false diff --cached --no-ext-diff --no-textconv -U0 -- . "${EXCLUDES[@]}" |
+        awk '/^\+/ { print }'
       ;;
     range)
+      local revision
       if git rev-parse --verify -q origin/main >/dev/null; then
-        git diff origin/main...HEAD -U0 -- . "${EXCLUDES[@]}" | grep '^+' || true
+        revision="origin/main..HEAD"
       else
-        collect_all
+        revision="HEAD"
       fi
+      # Inspect every new commit, including additions later removed, and
+      # compare merge commits to each parent. awk drains the whole stream.
+      git -c color.ui=false log --root -m -p --format= --no-ext-diff --no-textconv -U0 "$revision" -- . "${EXCLUDES[@]}" |
+        awk '/^\+/ { print }'
       ;;
     all)
       collect_all
       ;;
     *)
-      echo "Unknown mode: $MODE (use staged|range|all)" >&2
-      exit 2
+      echo "Unknown mode (use staged|range|all)" >&2
+      return 2
       ;;
   esac
 }
 
-collect_all() {
-  git ls-files -- . "${EXCLUDES[@]}" | while IFS= read -r f; do
-    sed "s|^|$f: |" "$f" 2>/dev/null || true
-  done
-}
-
-CONTENT="$(collect_content)"
-[ -z "$CONTENT" ] && exit 0
+if ! collect_content > "$CONTENT" 2>/dev/null; then
+  echo "Anonymization gate could not collect content; refusing to pass." >&2
+  exit 2
+fi
 
 FAIL=0
+check_pattern() {
+  local pattern="$1" label="$2" status=0
+  # Write all matches before limiting display: an early pipe consumer can
+  # cause SIGPIPE under pipefail and turn a detection into a false negative.
+  LC_ALL=C grep -anEi -- "$pattern" "$CONTENT" > "$MATCHES" 2>/dev/null || status=$?
+  case "$status" in
+    0)
+      echo "BLOCKED by $label (matched content redacted)"
+      awk -F: 'NR <= 5 { print "  collected input line " $1 }' "$MATCHES"
+      FAIL=1
+      ;;
+    1) ;;
+    *)
+      echo "Invalid or unreadable $label; refusing to pass." >&2
+      FAIL=1
+      ;;
+  esac
+}
+
+RULE=0
 for pattern in "${BUILTIN_PATTERNS[@]}"; do
-  if MATCHES="$(printf '%s\n' "$CONTENT" | grep -inE "$pattern" | head -5)"; then
-    [ -z "$MATCHES" ] && continue
-    echo "BLOCKED by builtin pattern: $pattern"
-    printf '%s\n' "$MATCHES"
-    FAIL=1
-  fi
+  RULE=$((RULE + 1))
+  check_pattern "$pattern" "builtin rule $RULE"
 done
 
 if [ -f "$LOCAL_LIST" ]; then
-  while IFS= read -r pattern; do
+  RULE=0
+  while IFS= read -r pattern || [ -n "$pattern" ]; do
+    RULE=$((RULE + 1))
     [ -z "$pattern" ] && continue
     case "$pattern" in \#*) continue ;; esac
-    if MATCHES="$(printf '%s\n' "$CONTENT" | grep -inE "$pattern" | head -5)"; then
-      [ -z "$MATCHES" ] && continue
-      echo "BLOCKED by local pattern: $pattern"
-      printf '%s\n' "$MATCHES"
-      FAIL=1
-    fi
+    check_pattern "$pattern" "local rule $RULE"
   done < "$LOCAL_LIST"
 fi
 

@@ -21,3 +21,17 @@ session start. Update when a work stream starts, changes state, or ends.
 
 - Describe your clouds, accounts, and tooling at the level an agent needs
   to be useful without asking.
+
+## Repository maintenance snapshot
+
+Updated: 2026-09-06. This section tracks the kit itself; example work streams
+above remain template content.
+
+- Local task source: this repository's `.beads/` (prefix `eos`); never route
+  kit maintenance into another workspace tracker.
+- Dashboard source isolation and dependency/privacy audit completed under
+  `eos-security.1` and `eos-security.2`.
+- Published author metadata needs a separate decision (`eos-security.3`);
+  no history rewrite or publication was performed.
+- RAG was unavailable during the audit; live personal vault setup remains
+  `eos-t61`. Do not interpret template examples as live infrastructure facts.
