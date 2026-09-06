@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work graph</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #F6F5F1;
+    --surface: #EFEDE8;
+    --sidebar: #F1EFEA;
+    --border: #E2E0D8;
+    --border-strong: #C9C6BB;
+    --hover: #E8E5DE;
+    --text: #1C1B18;
+    --text-secondary: #5D5A52;
+    --text-muted: #9B978C;
+    --accent: #C2402A;
+    --font-serif: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "IBM Plex Mono", SFMono-Regular, Menlo, monospace;
+    --sidebar-w: 248px;
+    --detail-w: 360px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161513;
+      --surface: #1D1C19;
+      --sidebar: #1A1917;
+      --border: #2B2A26;
+      --border-strong: #3C3A34;
+      --hover: #232220;
+      --text: #E9E7E0;
+      --text-secondary: #A6A299;
+      --text-muted: #6F6B62;
+      --accent: #D8543C;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; }
+  a { color: var(--text-secondary); }
+  a:hover { color: var(--accent); }
+  button { font: inherit; color: inherit; background: none; border: 1px solid var(--border); border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+  button:hover { background: var(--hover); }
+  button.active { border-color: var(--text); }
+  input[type="search"] { font: inherit; width: 100%; padding: 6px 8px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 4px; }
+  input[type="search"]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+  #root, .app { height: 100%; }
+  .app { display: grid; grid-template-columns: var(--sidebar-w) 1fr auto; overflow: hidden; }
+  .sidebar { background: var(--sidebar); border-right: 1px solid var(--border); padding: 18px 16px; overflow-y: auto; }
+  .brand { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 500; margin: 0 0 2px; }
+  .brand-sub { color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; margin-bottom: 18px; word-break: break-all; }
+  .views { display: flex; gap: 6px; margin-bottom: 18px; }
+  .sh { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin: 16px 0 6px; }
+  .filter-list { display: flex; flex-direction: column; gap: 2px; }
+  .filter-list label { display: flex; align-items: center; gap: 8px; padding: 2px 4px; border-radius: 3px; cursor: pointer; }
+  .filter-list label:hover { background: var(--hover); }
+  .filter-list input { accent-color: var(--accent); margin: 0; }
+  .filter-list .count { margin-left: auto; color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; }
+  .swatch { width: 9px; height: 9px; border-radius: 50%; display: inline-block; border: 1px solid var(--border-strong); }
+  .main { display: flex; flex-direction: column; min-width: 0; }
+  .topbar { display: flex; align-items: baseline; gap: 22px; padding: 14px 22px; border-bottom: 1px solid var(--border); }
+  .topbar h2 { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 500; margin: 0; }
+  .stat { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+  .stat b { color: var(--text); font-weight: 500; }
+  .stat.accent b { color: var(--accent); }
+  .canvas { flex: 1; min-height: 0; position: relative; }
+  .canvas svg { width: 100%; height: 100%; display: block; }
+  .legend { position: absolute; left: 16px; bottom: 12px; display: flex; gap: 14px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { display: inline-block; width: 18px; border-top: 1.5px solid var(--border-strong); }
+  .legend i.dashed { border-top-style: dashed; }
+  .legend i.dotted { border-top-style: dotted; }
+  .table-wrap { padding: 16px 22px; overflow: auto; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); font-weight: 500; }
+  td.num { font-family: var(--font-mono); font-size: 12px; text-align: right; }
+  th.num { text-align: right; }
+  tr.row:hover { background: var(--hover); cursor: pointer; }
+  .mono { font-family: var(--font-mono); font-size: 12px; }
+  .muted { color: var(--text-muted); }
+  .detail { width: var(--detail-w); border-left: 1px solid var(--border); background: var(--surface); padding: 18px 20px; overflow-y: auto; }
+  .detail h3 { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 500; margin: 6px 0 10px; line-height: 1.3; }
+  .detail .close { float: right; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 12px; }
+  .chip { font-family: var(--font-mono); font-size: 11px; padding: 1px 7px; border: 1px solid var(--border-strong); border-radius: 10px; color: var(--text-secondary); }
+  .chip.status-in_progress, .chip.status-blocked { border-color: var(--accent); color: var(--accent); }
+  .chip.ready { border-color: var(--text); color: var(--text); }
+  .detail pre { white-space: pre-wrap; word-break: break-word; font-family: inherit; font-size: 13px; color: var(--text-secondary); margin: 0 0 12px; }
+  .dep-list { list-style: none; padding: 0; margin: 0 0 12px; }
+  .dep-list li { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .dep-list li button { border: none; padding: 0; text-align: left; }
+  .dep-list li button:hover { background: none; color: var(--accent); }
+  .empty { padding: 40px; color: var(--text-muted); text-align: center; }
+  .error { margin: 22px; padding: 12px 14px; border: 1px solid var(--accent); border-radius: 4px; color: var(--accent); font-family: var(--font-mono); font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/bundle.js"></script>
+</body>
+</html>

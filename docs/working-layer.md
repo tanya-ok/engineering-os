@@ -33,6 +33,12 @@ writing.
 2. Claim it, announce the claim, do the work.
 3. Close it with a one-line result, and update the open loop.
 
+## See the graph
+
+The [work-graph dashboard](dashboard.md) renders the same task graph in a
+browser: issues by project, dependency edges, and the ready queue. It reads
+beads through `bd export` only.
+
 ## Why keep them separate
 
 Agents and humans work on different horizons and need different views. An agent
