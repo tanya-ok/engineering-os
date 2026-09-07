@@ -43,3 +43,6 @@ above remain template content.
   Consolidated draft review is `eos-review`. The owner alone merges changes.
 - Historical email cleanup verified in an isolated mirror; published refs
   remain unchanged pending a separately reviewed administrative replacement.
+
+Draft PR #23 is awaiting owner review. Related dependency PRs 14, 18 and 22
+are superseded. Published history cleanup remains a separate operation.

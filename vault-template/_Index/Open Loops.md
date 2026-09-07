@@ -28,3 +28,6 @@ verification passed with no new dependency audit findings.
 
 - `eos-review`: submit consolidated changes as a draft PR, verify CI and wait
   for owner review. Dependency PRs 14, 18 and 22 are superseded by this work.
+
+Draft PR #23 is awaiting owner review. Related dependency PRs 14, 18 and 22
+are superseded. Published history cleanup remains a separate operation.
