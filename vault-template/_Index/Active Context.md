@@ -38,3 +38,8 @@ above remain template content.
 
 - `eos-byn` completed: both packages use `@types/node` 26.4.1; typecheck,
   build, lint and unit tests pass. Runtime minimum and CI remain Node 24.
+
+- 2026-09-07: Node runtime minimum and CI updated to 26; verified on 26.3.1.
+  Consolidated draft review is `eos-review`. The owner alone merges changes.
+- Historical email cleanup verified in an isolated mirror; published refs
+  remain unchanged pending a separately reviewed administrative replacement.

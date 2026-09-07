@@ -29,8 +29,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   the workflow now set `onnxruntime-node-install=skip` (CPU-only embeddings).
 
 ### Changed
-- Update `@types/node` to 26.4.1 in both packages; runtime minimum and CI
-  remain on Node 24.
+- Require Node 26 and use it in both CI package jobs and setup checks.
+- Update `@types/node` to 26.4.1 in both packages; matching the Node 26 runtime and CI.
 - Update the pinned Pages deployment action to 5.0.1.
 - `rag/` dependency refresh: better-sqlite3 13, vitest 5, Biome 2.5.12,
   pnpm 10.34.5. Pinned GitHub

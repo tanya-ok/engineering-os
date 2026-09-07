@@ -25,3 +25,6 @@ omit owner email fields; review exports before publishing.
 
 Completed: `eos-byn` updated Node type definitions to 26.4.1 in both packages;
 verification passed with no new dependency audit findings.
+
+- `eos-review`: submit consolidated changes as a draft PR, verify CI and wait
+  for owner review. Dependency PRs 14, 18 and 22 are superseded by this work.
