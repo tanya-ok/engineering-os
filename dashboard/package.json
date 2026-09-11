@@ -8,7 +8,7 @@
     "eos-dashboard": "dist/cli.js"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=26"
   },
   "packageManager": "pnpm@10.34.5",
   "scripts": {
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
     "@types/d3": "7.4.3",
-    "@types/node": "24.13.3",
+    "@types/node": "26.4.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
     "d3": "7.9.0",

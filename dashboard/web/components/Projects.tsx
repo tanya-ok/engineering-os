@@ -39,7 +39,6 @@ export function Projects({ projects, config, onPick, onSelectIssue }: Props) {
                         open project
                       </a>
                     ) : null}
-                    {meta?.path ? ` ${meta.path}` : ""}
                   </div>
                 </td>
                 <td className="num">{p.open}</td>

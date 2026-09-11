@@ -23,7 +23,7 @@ export interface DashboardConfig {
 
 export interface PublicConfig {
   external_ref_url?: string;
-  projects: Record<string, ProjectMeta>;
+  projects: Record<string, Pick<ProjectMeta, "label" | "url">>;
 }
 
 export function expandPath(p: string, env: NodeJS.ProcessEnv = process.env): string {
@@ -91,7 +91,16 @@ export function loadDashboardConfig(
 }
 
 export function publicConfig(cfg: DashboardConfig): PublicConfig {
-  const out: PublicConfig = { projects: cfg.projects ?? {} };
+  const out: PublicConfig = { projects: {} };
+  for (const [id, meta] of Object.entries(cfg.projects ?? {})) {
+    out.projects[id] = {};
+    if (meta.label !== undefined) out.projects[id].label = meta.label;
+    if (meta.url !== undefined) out.projects[id].url = meta.url;
+  }
   if (cfg.external_ref_url !== undefined) out.external_ref_url = cfg.external_ref_url;
   return out;
+}
+
+export function runtimeConfig(fixture: boolean, file?: string): DashboardConfig {
+  return fixture || file === undefined ? {} : loadDashboardConfig(file);
 }

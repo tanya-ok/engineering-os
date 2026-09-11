@@ -3,7 +3,6 @@ export type { Issue } from "../src/types.js";
 
 export interface ProjectMeta {
   label?: string;
-  path?: string;
   url?: string;
 }
 

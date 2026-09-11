@@ -5,13 +5,13 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 if ! command -v node >/dev/null 2>&1; then
-  echo "Node.js not found. Install the active LTS (Node 24), e.g. via fnm/nvm/asdf."
+  echo "Node.js not found. Install Node 26 or newer, e.g. via fnm/nvm/asdf."
   exit 1
 fi
 
 NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
-if [ "$NODE_MAJOR" -lt 24 ]; then
-  echo "Node $(node --version) is too old. eos-rag needs Node >= 24 (active LTS)."
+if [ "$NODE_MAJOR" -lt 26 ]; then
+  echo "Node $(node --version) is too old. eos-rag needs Node >= 26."
   exit 1
 fi
 

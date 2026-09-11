@@ -8,7 +8,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import type { Source } from "./beads.js";
-import { loadDashboardConfig, publicConfig } from "./config.js";
+import { publicConfig, runtimeConfig } from "./config.js";
 import { buildGraph } from "./graph.js";
 import { createApp, startServer } from "./server.js";
 import { IssueStore } from "./store.js";
@@ -16,7 +16,6 @@ import { IssueStore } from "./store.js";
 const PKG_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FIXTURE = path.join(PKG_DIR, "fixtures", "beads.sample.jsonl");
 const PUBLIC_DIR = path.join(PKG_DIR, "public");
-const DEFAULT_CONFIG = path.join(PKG_DIR, "dashboard.json");
 const DEFAULT_PORT = 8766;
 const DEFAULT_TTL_SECONDS = 30;
 
@@ -27,14 +26,14 @@ Usage:
   eos-dashboard graph [--root <dir> | --jsonl <file> | --fixture] [--all] [--config <file>]
 
 Source resolution: flags, then EOS_BEADS_JSONL / EOS_BEADS_ROOT, then the
-config file (dashboard/dashboard.json), then a .beads directory in the current
+explicit --config file, then a .beads directory in the current
 directory, then the shipped anonymized fixture.
 
 Options:
   --root <dir>      workspace with a .beads directory (runs 'bd export' there)
   --jsonl <file>    a 'bd export' JSONL file
   --fixture         use the shipped sample data
-  --config <file>   local overlay (default: dashboard/dashboard.json)
+  --config <file>   explicit private overlay (ignored with --fixture)
   --port <N>        serve port (default: EOS_DASHBOARD_PORT or ${DEFAULT_PORT})
   --host <H>        serve bind address (default: EOS_DASHBOARD_HOST or 127.0.0.1)
   --all             graph: include closed issues
@@ -45,7 +44,7 @@ interface Args {
   root?: string;
   jsonl?: string;
   fixture: boolean;
-  config: string;
+  config?: string;
   port?: string;
   host?: string;
   all: boolean;
@@ -61,7 +60,7 @@ function parseArgs(argv: string[]): Args {
   if (verb !== "serve" && verb !== "graph") {
     fail(verb === undefined ? "missing command" : `unknown command '${verb}'`);
   }
-  const args: Args = { verb, fixture: false, config: DEFAULT_CONFIG, all: false };
+  const args: Args = { verb, fixture: false, all: false };
   for (let i = 0; i < rest.length; i += 1) {
     const flag = rest[i];
     const takeValue = (): string => {
@@ -133,7 +132,7 @@ function resolvePort(flag: string | undefined, env: NodeJS.ProcessEnv): number {
 async function main(): Promise<void> {
   if (fs.existsSync(".env")) process.loadEnvFile(".env");
   const args = parseArgs(process.argv.slice(2));
-  const cfg = loadDashboardConfig(args.config);
+  const cfg = runtimeConfig(args.fixture, args.config);
   const source = resolveSource(args, process.env, cfg, process.cwd());
   const ttlMs = (cfg.ttl_seconds ?? DEFAULT_TTL_SECONDS) * 1000;
   const store = new IssueStore(source, ttlMs);
