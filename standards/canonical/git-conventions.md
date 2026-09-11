@@ -14,3 +14,8 @@
 - **Write messages for a stranger.** The reader is someone six months from now
   deciding whether this commit is the one that broke something. Say what
   changed and why, not how.
+
+- **Owner review is mandatory.** Always open pull requests as drafts. The
+  repository owner reviews and merges changes; agents never merge or enable
+  auto-merge. Published history replacement is an administrative operation
+  that must be reviewed separately; merging a PR cannot remove old commits.

@@ -13,7 +13,7 @@ node dashboard/dist/cli.js serve --root ~/path/to/workspace     # runs `bd expor
 ```
 
 Open http://127.0.0.1:8766. Source resolution when no flag is given:
-`EOS_BEADS_JSONL` / `EOS_BEADS_ROOT`, then `dashboard/dashboard.json`, then a
+`EOS_BEADS_JSONL` / `EOS_BEADS_ROOT`, then an explicit `--config` file, then a
 `.beads` directory in the current directory, then the shipped anonymized
 fixture (`fixtures/beads.sample.jsonl`).
 
@@ -74,3 +74,8 @@ pnpm --dir dashboard test
 
 Only `bd export --no-memories` is ever executed, read-only, in the configured
 workspace. The server binds 127.0.0.1 unless `--host` says otherwise.
+
+Private overlays are loaded only with `--config dashboard/dashboard.json`.
+`--fixture` ignores overlays, including an explicitly supplied config, so demo
+labels and links cannot come from a private workspace. Health and source errors
+expose source kinds, not filesystem paths.

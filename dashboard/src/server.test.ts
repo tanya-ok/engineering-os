@@ -102,3 +102,16 @@ describe("static files", () => {
     expect((await app().request("/missing.js")).status).toBe(404);
   });
 });
+
+describe("source privacy", () => {
+  it("does not return source paths or filesystem errors", async () => {
+    const store = new IssueStore({ kind: "jsonl", path: "/private/nonexistent/export.jsonl" }, 0);
+    const api = createApp(store, PUBLIC, { projects: {} });
+    const health = await (await api.request("/api/health")).json();
+    expect(health).toMatchObject({ status: "degraded", source: "jsonl" });
+    expect(JSON.stringify(health)).not.toContain("/private");
+    const response = await api.request("/api/issues");
+    expect(response.status).toBe(503);
+    expect(await response.text()).not.toContain("/private");
+  });
+});

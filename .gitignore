@@ -30,3 +30,14 @@ site/
 # obsidian workspace state (keep vault-template/.obsidian minimal and committed)
 vault-template/.obsidian/workspace*.json
 vault-template/.obsidian/cache
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+.beads-credential-key
+
+# Share only portable task records; keep database and runtime state local.
+!/.beads/
+/.beads/*
+!/.beads/.gitignore
+!/.beads/config.yaml
+!/.beads/issues.jsonl

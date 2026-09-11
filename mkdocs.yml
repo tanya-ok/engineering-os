@@ -58,5 +58,6 @@ nav:
   - RAG layer: rag.md
   - Working layer: working-layer.md
   - Work-graph dashboard: dashboard.md
+  - History cleanup: history-cleanup.md
   - Standards: standards.md
   - Architecture: architecture.md

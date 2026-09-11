@@ -69,7 +69,7 @@ async function withIssues(
     issues = await store.get(boolParam(c.req.query("fresh"), false, "fresh"));
   } catch (e) {
     if (e instanceof BadRequest) return c.text(e.message, 400);
-    return c.text(`issue source failed: ${(e as Error).message}`, 503);
+    return c.text("Issue source unavailable. Check the local source configuration.", 503);
   }
   try {
     return await fn(issues);
@@ -96,11 +96,11 @@ export function createApp(store: IssueStore, publicDir: string, config: PublicCo
     const error = store.lastError;
     return c.json({
       status: error === undefined ? "ok" : "degraded",
-      source: store.sourceLabel,
+      source: store.source.kind,
       issues: count,
       projects,
       loaded_at: store.loadedAtIso ?? null,
-      last_error: error ?? null,
+      last_error: error === undefined ? null : "Issue source unavailable; data may be stale.",
     });
   });
 
