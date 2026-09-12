@@ -24,6 +24,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   `dashboard/dashboard.json` (see `dashboard.example.json`).
 
 ### Fixed
+- Secret scanning handles root commits and rewritten history without computing
+  a nonexistent parent; verify the pinned scanner archive before installation.
 - CI `test` job no longer times out: onnxruntime-node's postinstall tried to
   download CUDA binaries from NuGet on every Linux install. `rag/.npmrc` and
   the workflow now set `onnxruntime-node-install=skip` (CPU-only embeddings).
