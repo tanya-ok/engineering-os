@@ -31,3 +31,7 @@ verification passed with no new dependency audit findings.
 
 Draft PR #23 is awaiting owner review. Related dependency PRs 14, 18 and 22
 are superseded. Published history cleanup remains a separate operation.
+
+- 2026-09-12: `eos-secret-scan` fixes CI after history replacement by scanning
+  all reachable commits directly, including root commits. Prepared for owner
+  draft review; regression checks include a marker removed after the root commit.
