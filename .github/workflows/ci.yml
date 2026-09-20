@@ -68,18 +68,29 @@ jobs:
   secrets:
     permissions:
       contents: read
-      pull-requests: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+      - name: Install pinned Gitleaks
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
-          GITLEAKS_ENABLE_COMMENTS: false
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
-          GITLEAKS_ENABLE_SUMMARY: false
+          GITLEAKS_VERSION: 8.24.3
+          GITLEAKS_SHA256: 9991e0b2903da4c8f6122b5c3186448b927a5da4deef1fe45271c3793f4ee29c
+        run: |
+          set -euo pipefail
+          scan_install_dir="$(mktemp -d)"
+          trap 'rm -rf "$scan_install_dir"' EXIT
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}" \
+            --output "$scan_install_dir/$archive"
+          printf '%s  %s\n' "$GITLEAKS_SHA256" "$scan_install_dir/$archive" | sha256sum --check --strict -
+          tar -xzf "$scan_install_dir/$archive" -C "$scan_install_dir" gitleaks
+          mkdir -p "$RUNNER_TEMP/gitleaks-bin"
+          install -m 755 "$scan_install_dir/gitleaks" "$RUNNER_TEMP/gitleaks-bin/gitleaks"
+          echo "$RUNNER_TEMP/gitleaks-bin" >> "$GITHUB_PATH"
+      - name: Test scanning from the root commit
+        run: bash scripts/scan-secrets.test.sh
       - name: Scan all reachable history with redacted output
-        run: gitleaks git --log-opts=--all --redact --config .gitleaks.toml
+        run: bash scripts/scan-secrets.sh
