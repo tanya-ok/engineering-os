@@ -20,9 +20,9 @@
   },
   "dependencies": {
     "@hono/node-server": "2.1.1",
-    "@huggingface/transformers": "4.2.0",
+    "@huggingface/transformers": "4.3.0",
     "better-sqlite3": "13.0.3",
-    "hono": "4.13.7",
+    "hono": "4.13.8",
     "sqlite-vec": "0.1.9"
   },
   "pnpm": {
@@ -38,10 +38,10 @@
     }
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.12",
+    "@biomejs/biome": "2.5.14",
     "@types/better-sqlite3": "9.6.0",
-    "@types/node": "26.4.1",
+    "@types/node": "26.6.1",
     "typescript": "7.0.2",
-    "vitest": "5.0.0"
+    "vitest": "5.0.1"
   }
 }
