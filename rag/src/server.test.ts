@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { ensureSchema, f32ToBuffer, open } from "./db.js";
 import type { Embedder } from "./embed.js";
-import { buildFtsQuery, createApp, rrfFuse } from "./server.js";
+import { buildFtsQuery, createApp, mmrSelect, rrfFuse } from "./server.js";
 
 const DIM = 4;
 const BASE = "http://127.0.0.1:8765";
@@ -117,6 +117,36 @@ describe("rrf", () => {
     const fused = rrfFuse([7, 8], []);
     expect(fused.size).toBe(2);
     expect(fused.get(7)).toBeCloseTo(1 / 61, 12);
+  });
+});
+
+describe("mmrSelect", () => {
+  const vectors = new Map<number, Float32Array>([
+    [1, new Float32Array([1, 0, 0])],
+    [2, new Float32Array([0.9, 0.436, 0])],
+    [3, new Float32Array([0, 0, 1])],
+  ]);
+  // RRF-scale scores: ranks 1, 2 and a distant tail.
+  const scores = new Map([
+    [1, 1 / 61],
+    [2, 1 / 62],
+    [3, 1 / 120],
+  ]);
+
+  it("keeps a relevant near-duplicate at the default lambda", () => {
+    expect(mmrSelect([1, 2, 3], scores, vectors, 2, 0.7)).toEqual([1, 2]);
+  });
+
+  it("still diversifies at a low lambda", () => {
+    expect(mmrSelect([1, 2, 3], scores, vectors, 2, 0.3)).toEqual([1, 3]);
+  });
+
+  it("treats equal scores as equally relevant", () => {
+    const flat = new Map([
+      [1, 0.5],
+      [3, 0.5],
+    ]);
+    expect(mmrSelect([1, 3], flat, vectors, 2, 0.7)).toEqual([1, 3]);
   });
 });
 
