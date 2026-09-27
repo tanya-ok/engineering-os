@@ -4,7 +4,7 @@ About 15 minutes, most of it a one-time dependency install and model download.
 
 ## Requirements
 
-- Node.js 24 (active LTS) and pnpm.
+- Node.js 26 and pnpm.
 - Obsidian (optional but recommended for editing the vaults).
 
 ## Clone and build
