@@ -11,7 +11,7 @@ import { Ready } from "./components/Ready.js";
 import { Reviews } from "./components/Reviews.js";
 import { Sidebar } from "./components/Sidebar.js";
 import {
-  EDGE_TYPES,
+  edgeTypesOf,
   type Filters,
   type Graph,
   type GraphNode,
@@ -23,7 +23,7 @@ import {
 } from "./types.js";
 
 export function isBlockedNode(n: GraphNode): boolean {
-  return n.status === "blocked" || (n.blockers ?? 0) > 0;
+  return n.status === "blocked" || (n.blockers ?? 0) > 0 || n.parent_blocked === true;
 }
 
 function initialFilters(graph: Graph): Filters {
@@ -34,7 +34,7 @@ function initialFilters(graph: Graph): Filters {
     projects: new Set(graph.projects.map((p) => p.id)),
     statuses: new Set(STATUSES.filter((s) => s !== "closed")),
     types,
-    edgeTypes: new Set(EDGE_TYPES),
+    edgeTypes: new Set(edgeTypesOf(graph.edges)),
     membership: true,
     search: "",
   };
@@ -51,11 +51,12 @@ export function App() {
 
   const load = useCallback(async (fresh: boolean) => {
     try {
-      const [g, h, c] = await Promise.all([
+      const [g, c] = await Promise.all([
         getJson<Graph>(`/api/graph?include_closed=1&membership=1${fresh ? "&fresh=1" : ""}`),
-        getJson<Health>("/api/health"),
         getJson<PublicConfig>("/api/config"),
       ]);
+      // After the graph, so loaded_at reflects the reload that just ran.
+      const h = await getJson<Health>("/api/health");
       setGraph(g);
       setHealth(h);
       setConfig(c);

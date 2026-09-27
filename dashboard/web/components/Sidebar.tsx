@@ -1,7 +1,9 @@
 import type { Dispatch, SetStateAction } from "react";
 
+import { formatAge } from "../../src/format.js";
+
 import {
-  EDGE_TYPES,
+  edgeTypesOf,
   type Filters,
   type Graph,
   type Health,
@@ -124,7 +126,7 @@ export function Sidebar({ graph, filters, setFilters, view, setView, health, onR
 
       <div className="sh">Edges</div>
       <div className="filter-list">
-        {EDGE_TYPES.map((t) => (
+        {edgeTypesOf(graph?.edges ?? []).map((t) => (
           <label key={t}>
             <input
               type="checkbox"
@@ -146,7 +148,7 @@ export function Sidebar({ graph, filters, setFilters, view, setView, health, onR
 
       <div className="sh">Data</div>
       <div className="mono muted" style={{ marginBottom: 8 }}>
-        {health?.loaded_at ? `loaded ${health.loaded_at.slice(11, 19)} UTC` : "not loaded"}
+        {health?.loaded_at ? `loaded ${formatAge(health.loaded_at, Date.now())}` : "not loaded"}
         {health?.last_error ? ` · ${health.last_error}` : ""}
       </div>
       <button type="button" onClick={onReload}>

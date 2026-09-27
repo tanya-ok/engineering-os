@@ -27,11 +27,15 @@ function LinkList({
         {items.map((d) => (
           <li key={`${d.type}:${d.id}`}>
             <span className="chip">{d.type}</span>
-            <button type="button" onClick={() => onSelect(d.id)}>
-              <span className="mono">{d.id}</span> {d.title ?? ""}
-            </button>
+            {d.missing ? (
+              <span className="mono muted">{d.id}</span>
+            ) : (
+              <button type="button" onClick={() => onSelect(d.id)}>
+                <span className="mono">{d.id}</span> {d.title ?? ""}
+              </button>
+            )}
             <span className="mono muted" style={{ marginLeft: "auto" }}>
-              {d.status ?? ""}
+              {d.missing ? "not in source" : (d.status ?? "")}
             </span>
           </li>
         ))}
@@ -76,9 +80,7 @@ export function Detail({ id, config, onSelect, onClose }: Props) {
       </aside>
     );
   }
-  const { issue, dependencies, dependents } = detail;
-  const openBlockers = dependencies.filter((d) => d.type === "blocks" && d.status !== "closed");
-  const ready = issue.status === "open" && openBlockers.length === 0;
+  const { issue, state, dependencies, dependents } = detail;
   const refUrl =
     issue.external_ref !== undefined && config.external_ref_url !== undefined
       ? config.external_ref_url.replace("{ref}", encodeURIComponent(issue.external_ref))
@@ -96,9 +98,13 @@ export function Detail({ id, config, onSelect, onClose }: Props) {
         <span className={`chip status-${issue.status}`}>{issue.status.replace("_", " ")}</span>
         <span className="chip">P{issue.priority}</span>
         <span className="chip">{issue.issue_type}</span>
-        {ready ? <span className="chip ready">ready</span> : null}
-        {openBlockers.length > 0 ? (
-          <span className="chip status-blocked">{openBlockers.length} open blocker(s)</span>
+        {state.ready ? <span className="chip ready">ready</span> : null}
+        {state.open_blockers > 0 ? (
+          <span className="chip status-blocked">{state.open_blockers} open blocker(s)</span>
+        ) : null}
+        {state.parent_blocked ? <span className="chip status-blocked">parent blocked</span> : null}
+        {issue.defer_until !== undefined && !state.ready && issue.status === "open" ? (
+          <span className="chip">deferred to {issue.defer_until.slice(0, 10)}</span>
         ) : null}
       </div>
       <div className="mono muted" style={{ marginBottom: 10 }}>

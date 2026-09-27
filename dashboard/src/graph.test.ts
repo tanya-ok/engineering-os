@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { buildGraph, isBlocked, isReady, readyQueue, summarizeProjects } from "./graph.js";
+import {
+  buildGraph,
+  isBlocked,
+  isReady,
+  parentBlocked,
+  readyQueue,
+  summarizeProjects,
+} from "./graph.js";
 import type { Issue } from "./types.js";
 
 function issue(id: string, over: Partial<Issue> = {}): Issue {
@@ -81,8 +88,8 @@ describe("buildGraph", () => {
     issue("a-1"),
     issue("a-2", { status: "closed" }),
     issue("a-3", { dependencies: [dep("a-3", "a-1"), dep("a-3", "a-2")] }),
-    issue("b-1", { dependencies: [dep("b-1", "a-1", "relates_to")] }),
-    issue("a-1x", { id: "a-1x", dependencies: [dep("a-1x", "b-1", "relates_to")] }),
+    issue("b-1", { dependencies: [dep("b-1", "a-1", "relates-to")] }),
+    issue("a-1x", { id: "a-1x", dependencies: [dep("a-1x", "b-1", "relates-to")] }),
   ];
 
   it("hides closed issues and their edges by default", () => {
@@ -123,12 +130,66 @@ describe("buildGraph", () => {
     expect(a3).toMatchObject({ blockers: 1, ready: false });
   });
 
-  it("keeps one edge for a relates_to link recorded on both sides", () => {
+  it("keeps one edge for a relates-to link recorded on both sides", () => {
     const both = [
-      issue("a-1", { dependencies: [dep("a-1", "b-1", "relates_to")] }),
-      issue("b-1", { dependencies: [dep("b-1", "a-1", "relates_to")] }),
+      issue("a-1", { dependencies: [dep("a-1", "b-1", "relates-to")] }),
+      issue("b-1", { dependencies: [dep("b-1", "a-1", "relates-to")] }),
     ];
     const g = buildGraph(both, { membership: false });
     expect(g.edges).toHaveLength(1);
+  });
+});
+
+// Mirrors a scratch workspace checked against `bd ready` and `bd blocked` in
+// bd 1.0.0: which issues bd lists as ready is the expected set below.
+describe("parity with bd ready", () => {
+  const now = new Date("2026-09-27T12:00:00Z");
+  const all = [
+    issue("l-a"),
+    issue("l-b", { dependencies: [dep("l-b", "l-a")] }),
+    issue("l-c", { status: "in_progress" }),
+    issue("l-h", { dependencies: [dep("l-h", "l-c")] }),
+    issue("l-i", { status: "blocked" }),
+    issue("l-q", { dependencies: [dep("l-q", "l-i")] }),
+    issue("l-j", { status: "deferred" }),
+    issue("l-p", { dependencies: [dep("l-p", "l-j")] }),
+    issue("l-g", { status: "closed" }),
+    issue("l-f", { dependencies: [dep("l-f", "l-g")] }),
+    issue("l-k", { dependencies: [dep("l-k", "l-a", "relates-to")] }),
+    issue("l-o", { dependencies: [dep("l-o", "external:other:cap")] }),
+    issue("l-n", { issue_type: "epic" }),
+    issue("l-m", { issue_type: "epic", dependencies: [dep("l-m", "l-n")] }),
+    issue("l-l", { dependencies: [dep("l-l", "l-m", "parent-child")] }),
+    issue("l-g4", { dependencies: [dep("l-g4", "l-l", "parent-child")] }),
+    issue("l-e1", { issue_type: "epic", status: "blocked" }),
+    issue("l-c1", { dependencies: [dep("l-c1", "l-e1", "parent-child")] }),
+    issue("l-e2", { issue_type: "epic", status: "deferred" }),
+    issue("l-c2", { dependencies: [dep("l-c2", "l-e2", "parent-child")] }),
+    issue("l-r", { defer_until: "2026-12-01T00:00:00Z" }),
+    issue("l-s", { defer_until: "2026-01-01T00:00:00Z" }),
+  ];
+
+  it("selects the same ready set as bd", () => {
+    expect(
+      readyQueue(all, now)
+        .map((i) => i.id)
+        .sort(),
+    ).toEqual(["l-a", "l-c1", "l-c2", "l-f", "l-g4", "l-k", "l-n", "l-o", "l-s"].sort());
+  });
+
+  it("propagates blocking one level down parent-child only", () => {
+    const byId = new Map(all.map((i) => [i.id, i]));
+    const get = (id: string) => byId.get(id) as (typeof all)[number];
+    expect(parentBlocked(get("l-l"), byId)).toBe(true);
+    expect(isBlocked(get("l-l"), byId)).toBe(true);
+    expect(parentBlocked(get("l-g4"), byId)).toBe(false);
+    expect(parentBlocked(get("l-c1"), byId)).toBe(false);
+  });
+
+  it("hides future-deferred issues and counts them as deferred", () => {
+    const byId = new Map(all.map((i) => [i.id, i]));
+    expect(isReady(byId.get("l-r") as (typeof all)[number], byId, now)).toBe(false);
+    const [summary] = summarizeProjects(all, now);
+    expect(summary).toMatchObject({ deferred: 3, in_progress: 1, ready: 9 });
   });
 });

@@ -11,7 +11,15 @@ import { type Context, Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
 import type { PublicConfig } from "./config.js";
-import { buildGraph, readyQueue, summarizeProjects } from "./graph.js";
+import {
+  buildGraph,
+  indexById,
+  isReady,
+  openBlockers,
+  parentBlocked,
+  readyQueue,
+  summarizeProjects,
+} from "./graph.js";
 import { type BindOptions, hostGuard } from "./host-guard.js";
 import type { ReviewSource } from "./review-types.js";
 import { readReviews } from "./reviews.js";
@@ -209,12 +217,27 @@ export function createApp(
           title: i.title,
           status: i.status,
           type: i.dependencies.find((d) => d.to === id)?.type ?? "blocks",
+          missing: false,
         }));
+      const byId = indexById(issues);
+      // `missing`: the target is not in the source (external ref or other
+      // workspace); like `bd ready`, it never blocks.
       const dependencies = issue.dependencies.map((d) => {
-        const dep = issues.find((i) => i.id === d.to);
-        return { id: d.to, type: d.type, title: dep?.title ?? null, status: dep?.status ?? null };
+        const dep = byId.get(d.to);
+        return {
+          id: d.to,
+          type: d.type,
+          title: dep?.title ?? null,
+          status: dep?.status ?? null,
+          missing: dep === undefined,
+        };
       });
-      return c.json({ issue, dependencies, dependents });
+      const state = {
+        ready: isReady(issue, byId),
+        open_blockers: openBlockers(issue, byId),
+        parent_blocked: parentBlocked(issue, byId),
+      };
+      return c.json({ issue, state, dependencies, dependents });
     }),
   );
 

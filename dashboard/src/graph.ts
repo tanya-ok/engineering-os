@@ -21,6 +21,9 @@ export interface GraphNode {
   /** Issues that this one blocks. */
   dependents?: number;
   ready?: boolean;
+  /** True when a parent (parent-child) has an open blocker; mirrors `bd ready`. */
+  parent_blocked?: boolean;
+  defer_until?: string;
 }
 
 export interface GraphEdge {
@@ -59,7 +62,7 @@ export interface GraphOptions {
 
 export const CLOSED = "closed";
 export const MEMBER = "member";
-const SYMMETRIC_TYPES = new Set(["relates_to"]);
+const SYMMETRIC_TYPES = new Set(["relates-to", "related"]);
 
 export function projectNodeId(project: string): string {
   return `project:${project}`;
@@ -79,24 +82,56 @@ export function openBlockers(issue: Issue, byId: Map<string, Issue>): number {
   return n;
 }
 
-/** Mirrors `bd ready`: open, with no open blocker. */
-export function isReady(issue: Issue, byId: Map<string, Issue>): boolean {
-  return issue.status === "open" && openBlockers(issue, byId) === 0;
+/**
+ * bd 1.0 propagates blocking one level down parent-child edges: a child is
+ * blocked when its parent has an open `blocks` dependency. A parent that is
+ * only status-blocked, deferred, or itself parent-blocked does not propagate.
+ */
+export function parentBlocked(issue: Issue, byId: Map<string, Issue>): boolean {
+  for (const d of issue.dependencies) {
+    if (d.type !== "parent-child") continue;
+    const parent = byId.get(d.to);
+    if (parent !== undefined && parent.status !== CLOSED && openBlockers(parent, byId) > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function isDeferred(issue: Issue, now: Date): boolean {
+  if (issue.status === "deferred") return true;
+  if (issue.defer_until === undefined) return false;
+  const until = Date.parse(issue.defer_until);
+  return Number.isFinite(until) && until > now.getTime();
+}
+
+/**
+ * Mirrors `bd ready`: status open, not deferred to a future date, no open
+ * `blocks` dependency, and no parent with an open blocker. Dependencies on
+ * ids missing from the export (external refs) never block.
+ */
+export function isReady(issue: Issue, byId: Map<string, Issue>, now = new Date()): boolean {
+  return (
+    issue.status === "open" &&
+    !isDeferred(issue, now) &&
+    openBlockers(issue, byId) === 0 &&
+    !parentBlocked(issue, byId)
+  );
 }
 
 export function isBlocked(issue: Issue, byId: Map<string, Issue>): boolean {
   if (issue.status === CLOSED) return false;
-  return issue.status === "blocked" || openBlockers(issue, byId) > 0;
+  return issue.status === "blocked" || openBlockers(issue, byId) > 0 || parentBlocked(issue, byId);
 }
 
-export function readyQueue(issues: Issue[]): Issue[] {
+export function readyQueue(issues: Issue[], now = new Date()): Issue[] {
   const byId = indexById(issues);
   return issues
-    .filter((i) => isReady(i, byId))
+    .filter((i) => isReady(i, byId, now))
     .sort((a, b) => a.priority - b.priority || b.updated_at.localeCompare(a.updated_at));
 }
 
-export function summarizeProjects(issues: Issue[]): ProjectSummary[] {
+export function summarizeProjects(issues: Issue[], now = new Date()): ProjectSummary[] {
   const byId = indexById(issues);
   const map = new Map<string, ProjectSummary>();
   for (const i of issues) {
@@ -118,19 +153,19 @@ export function summarizeProjects(issues: Issue[]): ProjectSummary[] {
     }
     s.total += 1;
     if (i.status === CLOSED) s.closed += 1;
-    else if (i.status === "deferred") s.deferred += 1;
     else if (i.status === "in_progress") s.in_progress += 1;
+    else if (isDeferred(i, now)) s.deferred += 1;
     else s.open += 1;
     // blocked and ready partition the open set (plus explicit `blocked` status)
     if (isBlocked(i, byId)) s.blocked += 1;
-    if (isReady(i, byId)) s.ready += 1;
+    if (isReady(i, byId, now)) s.ready += 1;
     if (i.issue_type === "epic") s.epics.push({ id: i.id, title: i.title, status: i.status });
     if (i.domain !== undefined && !s.domains.includes(i.domain)) s.domains.push(i.domain);
   }
   return [...map.values()].sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export function buildGraph(issues: Issue[], opts: GraphOptions = {}): Graph {
+export function buildGraph(issues: Issue[], opts: GraphOptions = {}, now = new Date()): Graph {
   const byId = indexById(issues);
   const wanted = new Set(opts.projects ?? []);
   const visible = issues.filter(
@@ -160,7 +195,9 @@ export function buildGraph(issues: Issue[], opts: GraphOptions = {}): Graph {
     domain: i.domain,
     blockers: openBlockers(i, byId),
     dependents: dependents.get(i.id) ?? 0,
-    ready: isReady(i, byId),
+    ready: isReady(i, byId, now),
+    parent_blocked: parentBlocked(i, byId),
+    defer_until: i.defer_until,
   }));
 
   const edges: GraphEdge[] = [];
@@ -185,6 +222,8 @@ export function buildGraph(issues: Issue[], opts: GraphOptions = {}): Graph {
     }
   }
 
-  const projects = summarizeProjects(issues).filter((p) => wanted.size === 0 || wanted.has(p.id));
+  const projects = summarizeProjects(issues, now).filter(
+    (p) => wanted.size === 0 || wanted.has(p.id),
+  );
   return { nodes, edges, projects };
 }

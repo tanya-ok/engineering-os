@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -232,5 +234,51 @@ describe("security headers", () => {
       expect(res.headers.get("strict-transport-security")).toBeNull();
     }
     expect(rejected.status).toBe(403);
+  });
+});
+
+describe("issue detail state", () => {
+  it("reports readiness and marks dependencies missing from the source", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "eos-dash-"));
+    const file = path.join(dir, "beads.jsonl");
+    const rows = [
+      { id: "p-epic", title: "epic", issue_type: "epic", dependencies: [] },
+      {
+        id: "p-blocker",
+        title: "blocker",
+        dependencies: [],
+      },
+      {
+        id: "p-parent",
+        title: "parent",
+        dependencies: [{ issue_id: "p-parent", depends_on_id: "p-blocker", type: "blocks" }],
+      },
+      {
+        id: "p-child",
+        title: "child",
+        dependencies: [
+          { issue_id: "p-child", depends_on_id: "p-parent", type: "parent-child" },
+          { issue_id: "p-child", depends_on_id: "external:other:cap", type: "blocks" },
+        ],
+      },
+    ];
+    fs.writeFileSync(file, rows.map((r) => JSON.stringify(r)).join("\n"));
+    try {
+      const store = new IssueStore({ kind: "jsonl", path: file }, 60_000);
+      const res = await local(createApp(store, PUBLIC, { projects: {} }, { bind: BIND })).request(
+        "/api/issues/p-child",
+      );
+      const body = (await res.json()) as {
+        state: { ready: boolean; open_blockers: number; parent_blocked: boolean };
+        dependencies: { id: string; missing: boolean }[];
+      };
+      expect(body.state).toEqual({ ready: false, open_blockers: 0, parent_blocked: true });
+      expect(body.dependencies).toEqual([
+        expect.objectContaining({ id: "p-parent", missing: false }),
+        expect.objectContaining({ id: "external:other:cap", missing: true }),
+      ]);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

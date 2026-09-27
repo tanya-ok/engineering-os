@@ -13,5 +13,5 @@
     "types": [],
     "noEmit": true
   },
-  "include": ["./**/*.ts", "./**/*.tsx", "../src/types.ts", "../src/graph.ts"]
+  "include": ["./**/*.ts", "./**/*.tsx", "../src/types.ts", "../src/graph.ts", "../src/format.ts"]
 }
