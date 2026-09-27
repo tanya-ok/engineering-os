@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // eos-rag: local hybrid RAG for engineering-os.
-// Verbs: index (build/update the index) and serve (search API).
+// Verbs: index (build/update the index), serve (search API), doctor (health).
 
 import fs from "node:fs";
 import process from "node:process";
 
 import { loadConfig, resolveHost, resolvePort } from "./config.js";
 import { getMeta, open } from "./db.js";
+import { checkIndex, checkVaults, formatReport, hasErrors } from "./doctor.js";
 import { Embedder, modelCacheDir } from "./embed.js";
 import { checkIndexScope, indexAll } from "./indexer.js";
 import { startServer } from "./server.js";
@@ -16,6 +17,7 @@ const USAGE = `eos-rag - local hybrid RAG for engineering-os
 Usage:
   eos-rag index --config <path> [--rebuild]
   eos-rag serve --config <path> [--port N] [--host H] [--allow-remote]
+  eos-rag doctor --config <path>
 
 Options:
   --config <path>   vault registry json (default: rag/vaults.json)
@@ -27,7 +29,7 @@ Options:
 `;
 
 interface Args {
-  verb: "index" | "serve";
+  verb: "index" | "serve" | "doctor";
   config: string;
   rebuild: boolean;
   allowRemote: boolean;
@@ -42,7 +44,7 @@ function fail(message: string): never {
 
 function parseArgs(argv: string[]): Args {
   const [verb, ...rest] = argv;
-  if (verb !== "index" && verb !== "serve") {
+  if (verb !== "index" && verb !== "serve" && verb !== "doctor") {
     fail(verb === undefined ? "missing command" : `unknown command '${verb}'`);
   }
   const args: Args = { verb, config: "rag/vaults.json", rebuild: false, allowRemote: false };
@@ -132,10 +134,18 @@ async function runServe(args: Args): Promise<void> {
   startServer(db, embedder, cfg.embed_model, host, port);
 }
 
+function runDoctor(args: Args): void {
+  const cfg = loadConfig(args.config);
+  const findings = [...checkVaults(cfg, process.env), ...checkIndex(cfg)];
+  console.log(formatReport(findings));
+  if (hasErrors(findings)) process.exit(1);
+}
+
 async function main(): Promise<void> {
   if (fs.existsSync(".env")) process.loadEnvFile(".env");
   const args = parseArgs(process.argv.slice(2));
   if (args.verb === "index") await runIndex(args);
+  else if (args.verb === "doctor") runDoctor(args);
   else await runServe(args);
 }
 

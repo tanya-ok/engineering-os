@@ -22,6 +22,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   allocation) and postcss (source-map path traversal) to patched versions.
 
 ### Added
+- `eos-rag doctor`: read-only report on vault paths (env or default), the
+  index model, and index rows outside the configured paths, which a reindex
+  would prune. Docs cover pointing the RAG layer at your own vaults.
 - Work-graph dashboard (`dashboard/`, `eos-dashboard`): a local Hono API plus
   a React and d3 browser app over `bd export`. Issues grouped by project (the
   id prefix), `blocks` / `parent-child` / `discovered-from` / `relates_to`
