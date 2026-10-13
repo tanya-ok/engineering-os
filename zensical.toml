@@ -18,6 +18,7 @@ nav = [
   { "Concepts" = "concepts.md" },
   { "Five domains" = "domains.md" },
   { "Local retrieval" = "rag.md" },
+  { "Retrieval evaluation" = "retrieval-evaluation.md" },
   { "Standards" = "standards.md" },
   { "Work tracking" = "working-layer.md" },
   { "Portable portfolio" = "portable-portfolio.md" },

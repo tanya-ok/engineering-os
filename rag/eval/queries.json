@@ -1,0 +1,95 @@
+{
+  "comment": "Representative retrieval queries over the shipped templates. 'gold' is the path suffix of the note that answers the query; 'answer' is a phrase the answering chunk must contain. Run with rag/eval/run.mjs.",
+  "queries": [
+    {
+      "id": "tls-steps",
+      "query": "how do I rotate the TLS certificate on the load balancer",
+      "gold": "CloudOps/example-runbook-rotate-tls.md",
+      "answer": "Attach it to the load balancer listener"
+    },
+    {
+      "id": "tls-rollback",
+      "query": "roll back a certificate swap",
+      "gold": "CloudOps/example-runbook-rotate-tls.md",
+      "answer": "Reattach the previous certificate"
+    },
+    {
+      "id": "smoke-fail",
+      "query": "what happens when smoke tests fail after a staging deploy",
+      "gold": "DevOps/example-pipeline-note.md",
+      "answer": "deploy stops automatically"
+    },
+    {
+      "id": "prod-gate",
+      "query": "production deploy approval gate",
+      "gold": "DevOps/example-pipeline-note.md",
+      "answer": "manual approval"
+    },
+    {
+      "id": "storage-cost",
+      "query": "why did object storage cost go up",
+      "gold": "FinOps/example-cost-review.md",
+      "answer": "Log retention doubled"
+    },
+    {
+      "id": "transfer-spike",
+      "query": "data transfer spike root cause",
+      "gold": "FinOps/example-cost-review.md",
+      "answer": "misconfigured replication job"
+    },
+    {
+      "id": "encryption-gap",
+      "query": "which volumes are not covered by encryption at rest",
+      "gold": "SecOps/example-control-note.md",
+      "answer": "Ephemeral scratch volumes"
+    },
+    {
+      "id": "adr-datastore",
+      "query": "why is markdown the primary datastore instead of a database",
+      "gold": "Architecture/decisions/0001-vault-as-database.md",
+      "answer": "markdown"
+    },
+    {
+      "id": "ask-vs-act",
+      "query": "when should the agent ask before acting",
+      "gold": "ai-vault-template/interaction-rules/working-with-the-user.md",
+      "answer": "stop and ask first"
+    },
+    {
+      "id": "agent-boundaries",
+      "query": "agent boundaries on irreversible actions",
+      "gold": "ai-vault-template/identity/self.md",
+      "answer": "irreversible actions"
+    },
+    {
+      "id": "inbox-staging",
+      "query": "where do candidate facts about the user go before review",
+      "gold": "user-vault-template/README.md",
+      "answer": "_inbox/"
+    },
+    {
+      "id": "shell",
+      "query": "which shell should examples be written in",
+      "gold": "user-vault-template/environment/local-setup.md",
+      "answer": "Shell:"
+    },
+    {
+      "id": "dashes",
+      "query": "punctuation the user wants to avoid",
+      "gold": "user-vault-template/communication/style.md",
+      "answer": "em dashes"
+    },
+    {
+      "id": "open-loops",
+      "query": "unresolved items that survive across sessions",
+      "gold": "_Index/Open Loops.md",
+      "answer": "Unresolved items"
+    },
+    {
+      "id": "vault-map",
+      "query": "which folder holds security controls and audits",
+      "gold": "_Index/Vault Map.md",
+      "answer": "SecOps/"
+    }
+  ]
+}

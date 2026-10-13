@@ -22,6 +22,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   allocation) and postcss (source-map path traversal) to patched versions.
 
 ### Added
+- Retrieval evaluation: a template query set and runner (`rag/eval/`) plus
+  measured ranking modes, response budgets, and MCP options
+  (`docs/retrieval-evaluation.md`).
 - Work-graph dashboard (`dashboard/`, `eos-dashboard`): a local Hono API plus
   a React and d3 browser app over `bd export`. Issues grouped by project (the
   id prefix), `blocks` / `parent-child` / `discovered-from` / `relates_to`

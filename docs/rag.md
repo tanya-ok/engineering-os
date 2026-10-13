@@ -54,6 +54,8 @@ curl -s -X POST http://127.0.0.1:8765/search \
 An empty query returns 400; a genuine failure returns 500, so an empty result
 set always means "no matches", never "something broke".
 
+Ranking and budget measurements: [Retrieval evaluation](retrieval-evaluation.md).
+
 ## Model choice
 
 The config `embed_model` is a whitelisted HuggingFace-style id. Default
