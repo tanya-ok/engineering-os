@@ -32,6 +32,33 @@ prints a warning. Every request must carry a loopback `Host` header
 rebinding. `POST /search` requires `Content-Type: application/json` and
 rejects foreign `Origin` and cross-site `Sec-Fetch-Site` headers.
 
+## Using your own vaults
+
+The templates are the default. To index live vaults, keep every real path in
+local, gitignored files (`.env` and `rag/vaults.json`), never in the repo:
+
+1. Set the vault paths in `.env`:
+   ```sh
+   EOS_VAULT_PATH=~/vaults/work
+   EOS_AI_VAULT_PATH=~/vaults/ai
+   EOS_USER_VAULT_PATH=~/vaults/user
+   ```
+2. Add their parent to `allowed_roots` in `rag/vaults.json`, for example
+   `"allowed_roots": ["~/vaults"]`. Paths outside the allowed roots and any
+   iCloud path fail with a diode policy error.
+3. Check the result before indexing:
+   ```sh
+   node rag/dist/cli.js doctor --config rag/vaults.json
+   ```
+
+`doctor` is read-only. It reports, per vault, the resolved path, whether it
+came from the env variable or fell back to `path_default`, and how many files
+are indexable. For the index it reports a missing database, an embedding model
+mismatch, configured vaults without rows, and indexed files outside the
+configured paths. That last warning means the index was built from another
+config: running `index` now would prune those rows, so fix the paths first.
+It exits 1 on errors (missing vault directory, missing index, model mismatch).
+
 ## Search API
 
 `GET /health` returns `{status, model, files, chunks}`. `POST /search` accepts:
