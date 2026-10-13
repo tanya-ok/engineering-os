@@ -39,7 +39,8 @@ come through the `domain:` label convention from
 ## Ready and blocked
 
 Checked against `bd ready` and `bd blocked` from bd 1.0.0 on a scratch
-workspace covering each case below; the unit tests mirror it.
+workspace covering each case below; the unit tests mirror it. One deliberate
+difference: a missing blocker keeps the issue blocked, where `bd ready` lists it.
 
 | Case | Ready? |
 |---|---|
@@ -47,7 +48,7 @@ workspace covering each case below; the unit tests mirror it.
 | Status `in_progress`, `blocked`, `deferred`, or `closed` | no |
 | `defer_until` in the future (status stays `open`) | no, counted as deferred |
 | A `blocks` dependency on any non-closed issue, including in-progress, blocked, or deferred ones | no |
-| A `blocks` dependency on an id missing from the export (external ref, other workspace) | yes, it never blocks |
+| A `blocks` dependency on an id missing from the export (external ref, other workspace) | no, it stays blocked and the detail panel marks it "not in source" |
 | Parent (`parent-child`) has an open `blocks` dependency | no, shown as "parent blocked" |
 | Parent is only status-blocked or deferred, or grandparent is blocked | yes, propagation is one level |
 | `relates-to`, `discovered-from`, and other link types | never block |

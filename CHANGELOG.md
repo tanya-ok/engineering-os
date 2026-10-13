@@ -33,7 +33,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
 - Dashboard ready queue matches `bd ready` from bd 1.0.0: blocking propagates
   one level from a blocked parent, future `defer_until` hides an issue, and
   the `relates-to` link type is recognized. Detail panel marks dependencies
-  missing from the source; the sidebar shows data age after a reload.
+  missing from the source, which stay blocking unlike in `bd ready`; the
+  sidebar shows data age after a reload.
 - Secret scanning handles root commits and rewritten history without computing
   a nonexistent parent; verify the pinned scanner archive before installation.
 - CI `test` job no longer times out: onnxruntime-node's postinstall tried to

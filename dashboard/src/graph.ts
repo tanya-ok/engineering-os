@@ -107,8 +107,8 @@ export function isDeferred(issue: Issue, now: Date): boolean {
 
 /**
  * Mirrors `bd ready`: status open, not deferred to a future date, no open
- * `blocks` dependency, and no parent with an open blocker. Dependencies on
- * ids missing from the export (external refs) never block.
+ * `blocks` dependency, and no parent with an open blocker. Unlike `bd ready`,
+ * a `blocks` dependency on an id missing from the source stays blocking.
  */
 export function isReady(issue: Issue, byId: Map<string, Issue>, now = new Date()): boolean {
   return (

@@ -221,7 +221,7 @@ export function createApp(
         }));
       const byId = indexById(issues);
       // `missing`: the target is not in the source (external ref or other
-      // workspace); like `bd ready`, it never blocks.
+      // workspace); a missing `blocks` target still counts as open.
       const dependencies = issue.dependencies.map((d) => {
         const dep = byId.get(d.to);
         return {

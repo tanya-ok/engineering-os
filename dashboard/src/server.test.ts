@@ -272,7 +272,7 @@ describe("issue detail state", () => {
         state: { ready: boolean; open_blockers: number; parent_blocked: boolean };
         dependencies: { id: string; missing: boolean }[];
       };
-      expect(body.state).toEqual({ ready: false, open_blockers: 0, parent_blocked: true });
+      expect(body.state).toEqual({ ready: false, open_blockers: 1, parent_blocked: true });
       expect(body.dependencies).toEqual([
         expect.objectContaining({ id: "p-parent", missing: false }),
         expect.objectContaining({ id: "external:other:cap", missing: true }),

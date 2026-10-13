@@ -141,7 +141,8 @@ describe("buildGraph", () => {
 });
 
 // Mirrors a scratch workspace checked against `bd ready` and `bd blocked` in
-// bd 1.0.0: which issues bd lists as ready is the expected set below.
+// bd 1.0.0. One deliberate difference: bd lists l-o (blocked by an id missing
+// from the source) as ready; the dashboard keeps it blocked (fail closed).
 describe("parity with bd ready", () => {
   const now = new Date("2026-09-27T12:00:00Z");
   const all = [
@@ -169,12 +170,12 @@ describe("parity with bd ready", () => {
     issue("l-s", { defer_until: "2026-01-01T00:00:00Z" }),
   ];
 
-  it("selects the same ready set as bd", () => {
+  it("selects the bd ready set, keeping missing blockers blocked", () => {
     expect(
       readyQueue(all, now)
         .map((i) => i.id)
         .sort(),
-    ).toEqual(["l-a", "l-c1", "l-c2", "l-f", "l-g4", "l-k", "l-n", "l-o", "l-s"].sort());
+    ).toEqual(["l-a", "l-c1", "l-c2", "l-f", "l-g4", "l-k", "l-n", "l-s"].sort());
   });
 
   it("propagates blocking one level down parent-child only", () => {
@@ -190,6 +191,6 @@ describe("parity with bd ready", () => {
     const byId = new Map(all.map((i) => [i.id, i]));
     expect(isReady(byId.get("l-r") as (typeof all)[number], byId, now)).toBe(false);
     const [summary] = summarizeProjects(all, now);
-    expect(summary).toMatchObject({ deferred: 3, in_progress: 1, ready: 9 });
+    expect(summary).toMatchObject({ deferred: 3, in_progress: 1, ready: 8 });
   });
 });

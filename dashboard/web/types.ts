@@ -25,7 +25,7 @@ export interface LinkedIssue {
   type: string;
   title: string | null;
   status: string | null;
-  /** Target is not in the source; it never blocks. */
+  /** Target is not in the source; a missing `blocks` target still blocks. */
   missing: boolean;
 }
 
