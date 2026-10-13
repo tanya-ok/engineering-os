@@ -8,9 +8,10 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import type { Source } from "./beads.js";
-import { publicConfig, runtimeConfig } from "./config.js";
+import { publicConfig, resolveHost, runtimeConfig } from "./config.js";
 import { buildGraph } from "./graph.js";
 import { createApp, startServer } from "./server.js";
+import { SessionPlans } from "./sessions.js";
 import { IssueStore } from "./store.js";
 
 const PKG_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -22,7 +23,8 @@ const DEFAULT_TTL_SECONDS = 30;
 const USAGE = `eos-dashboard - work-graph dashboard over beads
 
 Usage:
-  eos-dashboard serve [--root <dir> | --jsonl <file> | --fixture] [--port N] [--host H] [--config <file>]
+  eos-dashboard serve [--root <dir> | --jsonl <file> | --fixture] [--port N] [--host H]
+                      [--allow-remote] [--config <file>]
   eos-dashboard graph [--root <dir> | --jsonl <file> | --fixture] [--all] [--config <file>]
 
 Source resolution: flags, then EOS_BEADS_JSONL / EOS_BEADS_ROOT, then the
@@ -36,6 +38,8 @@ Options:
   --config <file>   explicit private overlay (ignored with --fixture)
   --port <N>        serve port (default: EOS_DASHBOARD_PORT or ${DEFAULT_PORT})
   --host <H>        serve bind address (default: EOS_DASHBOARD_HOST or 127.0.0.1)
+  --allow-remote    permit a non-loopback --host (or EOS_DASHBOARD_ALLOW_REMOTE=1);
+                    the server has no authentication
   --all             graph: include closed issues
 `;
 
@@ -47,6 +51,7 @@ interface Args {
   config?: string;
   port?: string;
   host?: string;
+  allowRemote: boolean;
   all: boolean;
 }
 
@@ -60,7 +65,7 @@ function parseArgs(argv: string[]): Args {
   if (verb !== "serve" && verb !== "graph") {
     fail(verb === undefined ? "missing command" : `unknown command '${verb}'`);
   }
-  const args: Args = { verb, fixture: false, all: false };
+  const args: Args = { verb, fixture: false, allowRemote: false, all: false };
   for (let i = 0; i < rest.length; i += 1) {
     const flag = rest[i];
     const takeValue = (): string => {
@@ -90,6 +95,10 @@ function parseArgs(argv: string[]): Args {
         if (verb !== "serve") fail("--host only applies to serve");
         args.host = takeValue();
         break;
+      case "--allow-remote":
+        if (verb !== "serve") fail("--allow-remote only applies to serve");
+        args.allowRemote = true;
+        break;
       case "--all":
         if (verb !== "graph") fail("--all only applies to graph");
         args.all = true;
@@ -108,7 +117,7 @@ function parseArgs(argv: string[]): Args {
 export function resolveSource(
   args: Pick<Args, "root" | "jsonl" | "fixture">,
   env: NodeJS.ProcessEnv,
-  cfg: { beads_root?: string; jsonl?: string },
+  cfg: { beads_root?: string; jsonl?: string; sources?: import("./work-items.js").TrackerSource[] },
   cwd: string,
 ): Source {
   if (args.fixture) return { kind: "jsonl", path: FIXTURE };
@@ -116,6 +125,7 @@ export function resolveSource(
   if (args.root !== undefined) return { kind: "bd", root: args.root };
   if (env.EOS_BEADS_JSONL) return { kind: "jsonl", path: env.EOS_BEADS_JSONL };
   if (env.EOS_BEADS_ROOT) return { kind: "bd", root: env.EOS_BEADS_ROOT };
+  if (cfg.sources !== undefined) return { kind: "portfolio", sources: cfg.sources };
   if (cfg.jsonl !== undefined) return { kind: "jsonl", path: cfg.jsonl };
   if (cfg.beads_root !== undefined) return { kind: "bd", root: cfg.beads_root };
   if (fs.existsSync(path.join(cwd, ".beads"))) return { kind: "bd", root: cwd };
@@ -143,14 +153,26 @@ async function main(): Promise<void> {
     return;
   }
 
-  const issues = await store.get();
+  const { host, warning } = resolveHost(args.host, process.env, args.allowRemote);
+  if (warning !== undefined) console.error(warning);
+  const port = resolvePort(args.port, process.env);
+  const issues = await store.get().catch(() => []);
   console.log(`Loaded ${issues.length} issues from ${store.sourceLabel}`);
-  const app = createApp(store, PUBLIC_DIR, publicConfig(cfg));
-  startServer(
-    app,
-    args.host ?? process.env.EOS_DASHBOARD_HOST ?? "127.0.0.1",
-    resolvePort(args.port, process.env),
+  const roots = Object.fromEntries(
+    Object.entries(cfg.projects ?? {})
+      .filter(([, meta]) => meta.path && fs.existsSync(path.join(meta.path, ".git")))
+      .map(([id, meta]) => [id, meta.path as string]),
   );
+  const sessions =
+    args.fixture || Object.keys(roots).length === 0
+      ? null
+      : new SessionPlans(path.join(PKG_DIR, "data", "sessions"), roots);
+  const app = createApp(store, PUBLIC_DIR, publicConfig(cfg), {
+    bind: { host, port },
+    sessions,
+    reviews: cfg.reviews ?? [],
+  });
+  startServer(app, host, port);
 }
 
 main().catch((e: unknown) => {

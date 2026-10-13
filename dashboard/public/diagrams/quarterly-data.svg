@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="640" viewBox="0 0 1120 640" role="img" aria-labelledby="title desc">
+<title id="title">Planning, outcomes and time</title><desc id="desc">Current quarterly counts and the proposed event-based reporting layer</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#667a96"/></marker></defs>
+<rect width="1120" height="640" rx="20" fill="#f7f9fc"/>
+<style>text{font-family:Arial,sans-serif;fill:#172b4d}.caption{font-size:13px;fill:#53657d}.label{font-size:17px;font-weight:600}.lane{font-size:12px;font-weight:bold;letter-spacing:1.5px}.edge{fill:none;stroke:#667a96;stroke-width:2;marker-end:url(#arrow)}</style>
+<text x="32" y="42" font-size="25" font-weight="bold">Planning, outcomes and time</text>
+<text x="32" y="68" class="caption">Current quarterly counts and the proposed event-based reporting layer</text>
+<rect x="24" y="103" width="1072" height="240" rx="14" fill="#eaf0fa"/><text x="40" y="128" class="lane">IMPLEMENTED - LATEST BEADS SNAPSHOT</text>
+<rect x="24" y="368" width="1072" height="175" rx="14" fill="#f0f2f5"/><text x="40" y="393" class="lane">PROPOSED - EXPLICIT EVENTS, NOT INFERRED EFFORT</text>
+<path class="edge" d="M296 213H400"/>
+<text x="320" y="198" class="caption">planned</text>
+<path class="edge" d="M784 213H680"/>
+<text x="711" y="198" class="caption">actual</text>
+<path class="edge" d="M296 460H400" stroke-dasharray="7 5"/>
+<path class="edge" d="M784 460H680" stroke-dasharray="7 5"/>
+<rect x="44" y="155" width="252" height="124" rx="10" fill="#ffffff" stroke="#7094d5" stroke-width="1.5"/><text x="60" y="183" class="label">Plan label</text>
+<text x="60" y="206" class="caption">quarter:YYYY-QN</text>
+<text x="60" y="225" class="caption">One target quarter per task</text>
+<text x="60" y="244" class="caption">Conflicts are reported</text>
+<rect x="400" y="155" width="280" height="124" rx="10" fill="#ffffff" stroke="#7094d5" stroke-width="1.5"/><text x="416" y="183" class="label">Quarterly review</text>
+<text x="416" y="206" class="caption">Planned ≠ completed</text>
+<text x="416" y="225" class="caption">Beads task / bug / feature</text>
+<text x="416" y="244" class="caption">Epics excluded</text>
+<rect x="784" y="155" width="288" height="124" rx="10" fill="#ffffff" stroke="#7094d5" stroke-width="1.5"/><text x="800" y="183" class="label">Closure timestamp</text>
+<text x="800" y="206" class="caption">Currently closed tasks only</text>
+<text x="800" y="225" class="caption">Completion quarter in UTC</text>
+<text x="800" y="244" class="caption">Missing dates stay unknown</text>
+<rect x="44" y="414" width="252" height="93" rx="10" fill="#f2f4f7" stroke="#a0a9b8" stroke-width="1.5" stroke-dasharray="6 4"/><text x="60" y="442" class="label">Accepted work events</text>
+<text x="60" y="465" class="caption">Proposed immutable history</text>
+<text x="60" y="484" class="caption">Reopens / carryover / baselines</text>
+<rect x="400" y="414" width="280" height="93" rx="10" fill="#f2f4f7" stroke="#a0a9b8" stroke-width="1.5" stroke-dasharray="6 4"/><text x="416" y="442" class="label">Metric definitions</text>
+<text x="416" y="465" class="caption">Throughput / cycle time</text>
+<text x="416" y="484" class="caption">Coverage and missing data</text>
+<rect x="784" y="414" width="288" height="93" rx="10" fill="#f2f4f7" stroke="#a0a9b8" stroke-width="1.5" stroke-dasharray="6 4"/><text x="800" y="442" class="label">Separate time records</text>
+<text x="800" y="465" class="caption">Human time: manual / timer</text>
+<text x="800" y="484" class="caption">Agent runtime: separate measure</text>
+<text x="32" y="583" class="caption">Current snapshots cannot reconstruct past baselines or closure/reopen histories.</text>
+<text x="32" y="604" class="caption">No productivity score from task counts. No human effort inferred from commits, token usage or agent wall time.</text>
+</svg>

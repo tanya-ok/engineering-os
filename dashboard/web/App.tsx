@@ -2,9 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getJson } from "./api.js";
 import { Detail } from "./components/Detail.js";
+import { Documentation } from "./components/Documentation.js";
 import { ForceGraph } from "./components/Graph.js";
+import { Operations } from "./components/Operations.js";
 import { Projects } from "./components/Projects.js";
+import { Quarters } from "./components/Quarters.js";
 import { Ready } from "./components/Ready.js";
+import { Reviews } from "./components/Reviews.js";
 import { Sidebar } from "./components/Sidebar.js";
 import {
   EDGE_TYPES,
@@ -14,6 +18,7 @@ import {
   type Health,
   type PublicConfig,
   STATUSES,
+  VIEW_TITLES,
   type View,
 } from "./types.js";
 
@@ -110,13 +115,7 @@ export function App() {
       />
       <main className="main">
         <div className="topbar">
-          <h2>
-            {view === "graph"
-              ? "Dependency graph"
-              : view === "projects"
-                ? "Projects"
-                : "Ready queue"}
-          </h2>
+          <h2>{VIEW_TITLES[view]}</h2>
           <span className="stat">
             <b>{stats.total}</b> issues
           </span>
@@ -131,7 +130,15 @@ export function App() {
           </span>
         </div>
         {error !== null ? <div className="error">{error}</div> : null}
-        {graph === null || filters === null ? (
+        {view === "docs" ? (
+          <Documentation />
+        ) : view === "operations" ? (
+          <Operations />
+        ) : view === "reviews" ? (
+          <Reviews onSelect={setSelected} />
+        ) : view === "sessions" ? (
+          <Operations section="plans" />
+        ) : graph === null || filters === null ? (
           <div className="empty">Loading the work graph...</div>
         ) : view === "graph" ? (
           <ForceGraph
@@ -141,6 +148,8 @@ export function App() {
             selectedId={selected}
             onSelect={setSelected}
           />
+        ) : view === "quarters" ? (
+          <Quarters nodes={graph.nodes} />
         ) : view === "projects" ? (
           <Projects
             projects={graph.projects.filter((p) => filters.projects.has(p.id))}

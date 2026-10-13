@@ -1,14 +1,16 @@
 // Search server: /health and /search. Vector kNN via sqlite-vec, optional
 // hybrid lexical pass (BM25 over FTS5) fused with reciprocal rank fusion,
-// optional MMR rerank. Binds 127.0.0.1 unless told otherwise.
+// optional MMR rerank. Loopback only unless remote binding is explicitly allowed.
 
 import { serve as honoServe } from "@hono/node-server";
 import type Database from "better-sqlite3";
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 
 import type { FtsMode } from "./db.js";
 import { bufferToF32, f32ToBuffer, ftsMode } from "./db.js";
 import type { Embedder } from "./embed.js";
+import { type BindOptions, hostGuard } from "./host-guard.js";
 
 const RRF_K = 60;
 const TOP_MIN = 1;
@@ -228,8 +230,14 @@ async function runSearch(
   });
 }
 
-export function createApp(db: Database.Database, embedder: Embedder, model: string): Hono {
+export function createApp(
+  db: Database.Database,
+  embedder: Embedder,
+  model: string,
+  bind: BindOptions,
+): Hono {
   const app = new Hono();
+  app.use("*", hostGuard(bind));
 
   app.get("/health", (c) => {
     const chunks = (db.prepare("SELECT COUNT(*) AS n FROM chunks").get() as { n: number }).n;
@@ -237,6 +245,7 @@ export function createApp(db: Database.Database, embedder: Embedder, model: stri
     return c.json({ status: "ok", model, files, chunks });
   });
 
+  app.use("/search", bodyLimit({ maxSize: BODY_MAX_BYTES }));
   app.post("/search", async (c) => {
     const len = Number(c.req.header("content-length") ?? "0");
     if (!Number.isFinite(len) || len > BODY_MAX_BYTES) {
@@ -257,8 +266,8 @@ export function createApp(db: Database.Database, embedder: Embedder, model: stri
     try {
       const hits = await runSearch(db, embedder, params);
       return c.json({ hits });
-    } catch (e) {
-      return c.text(`search error: ${(e as Error).message}`, 500);
+    } catch {
+      return c.text("Search unavailable; check the local index and model", 500);
     }
   });
 
@@ -272,7 +281,7 @@ export function startServer(
   host: string,
   port: number,
 ): void {
-  const app = createApp(db, embedder, model);
+  const app = createApp(db, embedder, model, { host, port });
   honoServe({ fetch: app.fetch, hostname: host, port }, () => {
     console.log(`eos-rag serving on http://${host}:${port}`);
   });

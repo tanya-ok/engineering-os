@@ -20,12 +20,15 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 1
 fi
 
+# CPU-only inference: do not download CUDA execution providers at install time.
+export ONNXRUNTIME_NODE_INSTALL="${ONNXRUNTIME_NODE_INSTALL:-skip}"
+
 echo "Installing and building the RAG layer (first run downloads dependencies)..."
-pnpm --dir rag install
+pnpm --dir rag install --frozen-lockfile
 pnpm --dir rag run build
 
 echo "Installing and building the work-graph dashboard..."
-pnpm --dir dashboard install
+pnpm --dir dashboard install --frozen-lockfile
 pnpm --dir dashboard run build
 
 if [ ! -f .env ]; then

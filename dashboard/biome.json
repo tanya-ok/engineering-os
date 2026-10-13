@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!dist", "!node_modules", "!public/bundle.js"]
+    "includes": ["**", "!dist", "!data", "!node_modules", "!public/bundle.js"]
   },
   "formatter": {
     "enabled": true,

@@ -1,5 +1,5 @@
-// Incremental indexer: only files whose mtime moved beyond the epsilon are
-// reprocessed; files deleted on disk are pruned. Each file is embedded BEFORE
+// Incremental indexer: mtime and chunk content determine freshness; files
+// deleted on disk are pruned. Each file is embedded BEFORE
 // any database mutation, and all of its row changes run in one transaction,
 // so a failed embed or a crash mid-run can never leave a file marked fresh
 // with its chunks missing.
@@ -10,7 +10,7 @@ import path from "node:path";
 import type Database from "better-sqlite3";
 
 import { chunkMarkdown } from "./chunk.js";
-import type { Config, VaultEntry } from "./config.js";
+import { type Config, canonicalize, type VaultEntry } from "./config.js";
 import { ensureSchema, f32ToBuffer } from "./db.js";
 import type { Embedder } from "./embed.js";
 
@@ -87,8 +87,7 @@ export async function indexAll(
 
   for (const vault of cfg.vaults) {
     if (!fs.existsSync(vault.resolved_path) || !fs.statSync(vault.resolved_path).isDirectory()) {
-      console.log(`[${vault.vault_id}] skipped, path not found: ${vault.resolved_path}`);
-      continue;
+      throw new Error("Configured vault is unavailable; index is not refreshed");
     }
     const onDisk = scanVault(vault);
     const inDb = new Map<string, number>(
@@ -115,7 +114,6 @@ export async function indexAll(
     }
 
     for (const [filePath, mtime] of onDisk) {
-      if (!needsReindex(inDb.get(filePath), mtime)) continue;
       let text: string;
       try {
         text = fs.readFileSync(filePath, "utf8");
@@ -125,6 +123,17 @@ export async function indexAll(
       }
 
       const chunks = chunkMarkdown(text);
+      if (!needsReindex(inDb.get(filePath), mtime)) {
+        const previous = db
+          .prepare(`SELECT c.heading, c.content FROM chunks c JOIN files f ON f.id = c.file_id
+          WHERE f.path = ? ORDER BY c.id`)
+          .all(filePath) as { heading: string; content: string }[];
+        if (
+          JSON.stringify(previous) ===
+          JSON.stringify(chunks.map((c) => ({ heading: c.heading, content: c.content })))
+        )
+          continue;
+      }
       // Embed first: a failure here returns before any DB mutation, so the
       // existing rows and mtime stay intact.
       const vectors = await embedder.embedPassages(chunks.map((c) => c.content));
@@ -172,4 +181,32 @@ export async function indexAll(
   }
   stats.elapsedMs = Date.now() - started;
   return stats;
+}
+
+// Configuration narrowing must never keep serving rows from an older wider index.
+export function checkIndexScope(db: Database.Database, cfg: Config): void {
+  const vaults = new Map(cfg.vaults.map((v) => [v.vault_id, v]));
+  const files = db.prepare("SELECT vault_id, path FROM files").all() as {
+    vault_id: string;
+    path: string;
+  }[];
+  for (const file of files) {
+    const vault = vaults.get(file.vault_id);
+    if (!vault) throw new Error("Index contains an unconfigured vault; rebuild a separate index");
+    const rel = path.relative(vault.resolved_path, canonicalize(file.path));
+    if (rel.startsWith("..") || path.isAbsolute(rel))
+      throw new Error("Index path is outside the configured vault; rebuild a separate index");
+    const parts = rel.split(path.sep);
+    if (
+      parts
+        .slice(0, -1)
+        .some(
+          (p) =>
+            vault.excluded_dirs.includes(p) ||
+            (vault.exclude_underscore_prefix && p.startsWith("_")),
+        ) ||
+      !vault.extensions.includes(path.extname(file.path))
+    )
+      throw new Error("Index contains an excluded file; refresh before serving");
+  }
 }

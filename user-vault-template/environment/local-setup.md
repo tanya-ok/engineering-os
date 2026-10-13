@@ -15,7 +15,7 @@ actually run on your machine instead of generic ones.
 
 ## Toolchain
 
-- Language runtimes and versions: (e.g. Node 24 LTS, Python 3.12).
+- Language runtimes and versions: (e.g. Node 26, Python 3.12).
 - Package managers: (e.g. pnpm, uv).
 - Linter / formatter: (e.g. Biome, ruff).
 

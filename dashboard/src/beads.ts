@@ -11,7 +11,10 @@ import type { Dependency, Issue } from "./types.js";
 const execFileAsync = promisify(execFile);
 const EXPORT_MAX_BYTES = 64 * 1024 * 1024;
 
-export type Source = { kind: "bd"; root: string } | { kind: "jsonl"; path: string };
+export type LocalSource = { kind: "bd"; root: string } | { kind: "jsonl"; path: string };
+export type Source =
+  | LocalSource
+  | { kind: "portfolio"; sources: import("./work-items.js").TrackerSource[] };
 
 /** The project is the id prefix: everything before the last hyphen. */
 export function projectOf(id: string): string {
@@ -36,12 +39,27 @@ function normalizeDependencies(issueId: string, raw: unknown): Dependency[] {
     const r = d as Record<string, unknown>;
     // `bd export` shape: {issue_id, depends_on_id, type}.
     // `bd show --json` shape: {id, dependency_type, ...full issue}.
-    const to = str(r.depends_on_id) ?? str(r.id);
+    const ref = r.target_ref;
+    let target: Dependency["target_ref"];
+    if (ref !== undefined) {
+      if (!ref || typeof ref !== "object" || Array.isArray(ref))
+        throw new Error("Invalid dependency reference");
+      const t = ref as Record<string, unknown>;
+      if (!str(t.source_id) || !str(t.repository_id) || !str(t.native_id))
+        throw new Error("Invalid dependency reference");
+      target = {
+        source_id: t.source_id as string,
+        repository_id: t.repository_id as string,
+        native_id: t.native_id as string,
+      };
+    }
+    const to = target?.native_id ?? str(r.depends_on_id) ?? str(r.id);
     if (to === undefined) continue;
     out.push({
       from: str(r.issue_id) ?? issueId,
       to,
       type: str(r.type) ?? str(r.dependency_type) ?? "blocks",
+      ...(target ? { target_ref: target } : {}),
     });
   }
   return out;
@@ -97,7 +115,7 @@ export function parseExport(text: string): Issue[] {
   return issues;
 }
 
-export async function loadIssues(source: Source): Promise<Issue[]> {
+export async function loadIssues(source: LocalSource): Promise<Issue[]> {
   if (source.kind === "jsonl") {
     return parseExport(fs.readFileSync(source.path, "utf8"));
   }
@@ -105,14 +123,17 @@ export async function loadIssues(source: Source): Promise<Issue[]> {
   if (!fs.existsSync(path.join(root, ".beads"))) {
     throw new Error(`no .beads directory under ${root}`);
   }
-  const { stdout } = await execFileAsync("bd", ["export", "--no-memories"], {
+  const { stdout } = await execFileAsync("bd", ["export", "--no-memories", "--quiet"], {
     cwd: root,
     maxBuffer: EXPORT_MAX_BYTES,
+    timeout: 15_000,
+    killSignal: "SIGKILL",
   });
   return parseExport(stdout);
 }
 
 export function describeSource(source: Source): string {
+  if (source.kind === "portfolio") return "Configured portfolio sources";
   return source.kind === "bd"
     ? `bd export in ${path.resolve(source.root)}`
     : `jsonl ${path.resolve(source.path)}`;

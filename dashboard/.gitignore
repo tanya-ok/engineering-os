@@ -2,3 +2,5 @@ node_modules/
 dist/
 public/bundle.js
 dashboard.json
+
+data/

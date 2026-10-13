@@ -35,3 +35,28 @@ are superseded. Published history cleanup remains a separate operation.
 - 2026-09-12: `eos-secret-scan` fixes CI after history replacement by scanning
   all reachable commits directly, including root commits. Prepared for owner
   draft review; regression checks include a marker removed after the root commit.
+  Merged as #24 on 2026-09-20.
+
+The `eos-nmy` portfolio tasks are implemented locally with synthetic and local
+source checks. Remaining operator boundaries: published-history administration,
+actual private-vault onboarding (`eos-t61`), remote CI and publication. Tracker
+writes and cross-provider synchronization require a separate design; the new
+adapters read local snapshots only. Real-model ranking evidence covers the fixed
+shipped template questions, not every language or a production corpus.
+
+## Publication preparation on 2026-10-07
+
+Local preparation task `eos-f71` is closed after verifying its acceptance criteria.
+The clean pnpm 12.10.1 bootstrap, 49 retrieval checks (including the actual local
+model), 63 dashboard checks, both type/lint gates and archive-content checks
+passed. Independently installed packages demonstrated actual HTTP search and the
+work dashboard, refused invalid inputs and cleaned up their owned state.
+
+Distribution allowlists exclude private runtime configuration and include licenses
+and the dashboard web bundle. Unknown build scripts remain refused. The concise
+Zensical overview and architecture diagram passed strict builds and desktop/mobile
+review. Final committed-source and history secret scans returned zero findings.
+
+Publication, remote CI and the public Pages URL have not been executed or verified.
+They need a separate owner instruction. Private live vaults remain outside cloud
+review packets; this records kit maintenance, not live example work streams.

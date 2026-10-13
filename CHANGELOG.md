@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
 ## [Unreleased]
 
 ### Security
+- Both local servers accept only loopback `Host` headers and same-origin
+  JSON POST requests, and refuse non-loopback binds without `--allow-remote`.
+- The dashboard sends a Content Security Policy and related security headers,
+  accepts only http and https links in its overlay, and skips unreadable
+  session files.
+- Override source-map-js to 1.2.2 or later in both packages.
 - Require explicit dashboard overlays and ignore them in demo mode. Remove
   filesystem paths and raw source errors from browser-facing responses.
 - Harden the anonymization gate and add redacted secret scanning to CI.

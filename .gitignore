@@ -41,3 +41,7 @@ vault-template/.obsidian/cache
 !/.beads/.gitignore
 !/.beads/config.yaml
 !/.beads/issues.jsonl
+/.venv-docs/
+/site/
+/.cache/
+AGENTS.local.md

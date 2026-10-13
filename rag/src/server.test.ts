@@ -9,6 +9,7 @@ import type { Embedder } from "./embed.js";
 import { buildFtsQuery, createApp, rrfFuse } from "./server.js";
 
 const DIM = 4;
+const BASE = "http://127.0.0.1:8765";
 
 // Stub embedder: deterministic vectors, no model download.
 const stubEmbedder = {
@@ -40,11 +41,11 @@ function seededApp() {
     f32ToBuffer(Float32Array.from([1, 0, 0, 0])),
   );
   db.prepare("INSERT INTO chunks_fts(rowid, content) VALUES (1, 'certificate rotation')").run();
-  return createApp(db, stubEmbedder, "stub");
+  return createApp(db, stubEmbedder, "stub", { host: "127.0.0.1", port: 8765 });
 }
 
 async function search(app: ReturnType<typeof seededApp>, body: unknown) {
-  return app.request("/search", {
+  return app.request(`${BASE}/search`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
@@ -86,7 +87,7 @@ describe("search validation", () => {
 
   it("health reports counts and model", async () => {
     const app = seededApp();
-    const res = await app.request("/health");
+    const res = await app.request(`${BASE}/health`);
     expect(await res.json()).toEqual({ status: "ok", model: "stub", files: 1, chunks: 1 });
   });
 });
@@ -116,5 +117,62 @@ describe("rrf", () => {
     const fused = rrfFuse([7, 8], []);
     expect(fused.size).toBe(2);
     expect(fused.get(7)).toBeCloseTo(1 / 61, 12);
+  });
+});
+
+it("bounds a search body without a Content-Length header", async () => {
+  const app = seededApp();
+  const res = await app.request(`${BASE}/search`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ query: "x".repeat(70000) }),
+  });
+  expect(res.status).toBe(413);
+});
+
+describe("local request guard", () => {
+  let app: ReturnType<typeof seededApp>;
+  beforeEach(() => {
+    app = seededApp();
+  });
+  const post = (url: string, headers: Record<string, string>, body = '{"query":"x"}') =>
+    app.request(url, { method: "POST", headers, body });
+  const json = { "content-type": "application/json" };
+
+  it("accepts loopback Host names on the bound port", async () => {
+    for (const host of ["127.0.0.1:8765", "localhost:8765", "[::1]:8765"]) {
+      expect((await post(`${BASE}/search`, { ...json, host })).status).toBe(200);
+    }
+  });
+
+  it("rejects rebinding Host names and other ports", async () => {
+    for (const host of ["attacker.example:8765", "127.0.0.1:9999", "localhost"]) {
+      expect((await post(`${BASE}/search`, { ...json, host })).status).toBe(403);
+    }
+    const health = await app.request(`${BASE}/health`, {
+      headers: { host: "rebind.example:8765" },
+    });
+    expect(health.status).toBe(403);
+  });
+
+  it("requires a JSON content type on POST", async () => {
+    expect((await post(`${BASE}/search`, { "content-type": "text/plain" })).status).toBe(415);
+    expect((await post(`${BASE}/search`, {})).status).toBe(415);
+    const withCharset = { "content-type": "application/json; charset=utf-8" };
+    expect((await post(`${BASE}/search`, withCharset)).status).toBe(200);
+  });
+
+  it("rejects foreign origins and cross-site fetches", async () => {
+    expect((await post(`${BASE}/search`, { ...json, origin: "https://evil.example" })).status).toBe(
+      403,
+    );
+    expect((await post(`${BASE}/search`, { ...json, origin: "null" })).status).toBe(403);
+    expect((await post(`${BASE}/search`, { ...json, "sec-fetch-site": "cross-site" })).status).toBe(
+      403,
+    );
+    expect((await post(`${BASE}/search`, { ...json, "sec-fetch-site": "same-site" })).status).toBe(
+      403,
+    );
+    expect((await post(`${BASE}/search`, { ...json, origin: BASE })).status).toBe(200);
   });
 });

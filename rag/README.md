@@ -13,7 +13,7 @@ pnpm --dir rag install && pnpm --dir rag run build   # from the repo root
 cp rag/vaults.example.json rag/vaults.json           # if not already present
 
 node rag/dist/cli.js index --config rag/vaults.json
-node rag/dist/cli.js serve --config rag/vaults.json [--port N] [--host H]
+node rag/dist/cli.js serve --config rag/vaults.json [--port N] [--host H] [--allow-remote]
 ```
 
 Run the commands from the repo root so the default `--config rag/vaults.json`
@@ -64,3 +64,6 @@ always rejected: work-side indexes must never ingest personal data.
 | `src/db.ts` | SQLite + sqlite-vec + FTS5 schema (trigram with fallback) |
 | `src/indexer.ts` | Incremental indexer (mtime-based) |
 | `src/server.ts` | Hono search server |
+
+See [context isolation and freshness](../docs/portable-portfolio.md#context-and-reproducibility)
+for separate-index boundaries and real-model evaluation. Search filters do not authorize access.

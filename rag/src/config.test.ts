@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { expandTilde, expandVars, loadConfig, resolvePort } from "./config.js";
+import { expandTilde, expandVars, loadConfig, resolveHost, resolvePort } from "./config.js";
 import { DEFAULT_MODEL } from "./embed.js";
 
 let dir: string;
@@ -200,5 +200,39 @@ describe("resolvePort", () => {
     expect(() => resolvePort(undefined, { EOS_SERVER_PORT: "80x" })).toThrow(/invalid port/);
     expect(() => resolvePort("0", {})).toThrow(/invalid port/);
     expect(() => resolvePort("65536", {})).toThrow(/invalid port/);
+  });
+});
+
+describe("resolveHost", () => {
+  it("defaults to loopback and honours the env host", () => {
+    expect(resolveHost(undefined, {})).toEqual({ host: "127.0.0.1" });
+    expect(resolveHost(undefined, { EOS_SERVER_HOST: "localhost" })).toEqual({ host: "localhost" });
+  });
+
+  it("refuses a non-loopback host without an explicit override", () => {
+    expect(() => resolveHost("0.0.0.0", {})).toThrow(/--allow-remote/);
+    expect(() => resolveHost(undefined, { EOS_SERVER_HOST: "0.0.0.0" })).toThrow(/non-loopback/);
+    expect(resolveHost("0.0.0.0", {}, true).warning).toMatch(/^warning:/);
+    expect(resolveHost("0.0.0.0", { EOS_SERVER_ALLOW_REMOTE: "1" }).warning).toMatch(/^warning:/);
+  });
+});
+
+describe("empty vault path regression", () => {
+  it.each(["", "   "])("falls back when path_env is blank (%j)", (value) => {
+    const vault = vaultDir("fallback");
+    const cfgPath = writeConfig({
+      vaults: [{ vault_id: "work", path_env: "TEST_VAULT", path_default: vault }],
+    });
+    expect(loadConfig(cfgPath, { TEST_VAULT: value }).vaults[0]?.resolved_path).toBe(
+      fs.realpathSync(vault),
+    );
+  });
+
+  it("rejects a default path that expands to empty instead of indexing cwd", () => {
+    const cfgPath = writeConfig({
+      allowed_roots: [process.cwd()],
+      vaults: [{ vault_id: "work", path_default: "$MISSING_VAULT" }],
+    });
+    expect(() => loadConfig(cfgPath, {})).toThrow(/empty path/);
   });
 });

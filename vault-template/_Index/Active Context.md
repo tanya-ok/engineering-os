@@ -37,7 +37,8 @@ above remain template content.
   `eos-t61`. Do not interpret template examples as live infrastructure facts.
 
 - `eos-byn` completed: both packages use `@types/node` 26.4.1; typecheck,
-  build, lint and unit tests pass. Runtime minimum and CI remain Node 24.
+  build, lint and unit tests pass. Runtime minimum and CI were still Node 24
+  at that point.
 
 - 2026-09-07: Node runtime minimum and CI updated to 26; verified on 26.3.1.
   Consolidated draft review is `eos-review`. The owner alone merges changes.
@@ -50,3 +51,31 @@ are superseded. Published history cleanup remains a separate operation.
 - 2026-09-12: `eos-secret-scan` fixes CI after history replacement by scanning
   all reachable commits directly, including root commits. Prepared for owner
   draft review; regression checks include a marker removed after the root commit.
+  Merged as #24 on 2026-09-20.
+
+## Portfolio maintenance on 2026-10-07
+
+`eos-nmy` adds optional local tracker adapters and read-only quorum evidence.
+Source/repository/native IDs remain distinct; Linear is optional. Tests cover
+partial failures, unresolved and cross-repository dependencies. RAG scope/freshness
+checks and the real-model English/Russian template test passed. A clean temporary
+bootstrap built both packages on Node 26.10.0 with pnpm from `packageManager`.
+Private live vaults and cloud retrieval packets were not used. This records kit
+maintenance, not a claim that the example work streams are live.
+
+## Publication preparation on 2026-10-07
+
+Local preparation task `eos-f71` is closed after verifying its acceptance criteria.
+The clean pnpm 12.10.1 bootstrap, 49 retrieval checks (including the actual local
+model), 63 dashboard checks, both type/lint gates and archive-content checks
+passed. Independently installed packages demonstrated actual HTTP search and the
+work dashboard, refused invalid inputs and cleaned up their owned state.
+
+Distribution allowlists exclude private runtime configuration and include licenses
+and the dashboard web bundle. Unknown build scripts remain refused. The concise
+Zensical overview and architecture diagram passed strict builds and desktop/mobile
+review. Final committed-source and history secret scans returned zero findings.
+
+Publication, remote CI and the public Pages URL have not been executed or verified.
+They need a separate owner instruction. Private live vaults remain outside cloud
+review packets; this records kit maintenance, not live example work streams.

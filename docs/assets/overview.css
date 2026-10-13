@@ -1,0 +1,13 @@
+/* Compact project overviews. Full reference pages retain the site theme. */
+.md-typeset .project-kicker { color: var(--md-typeset-a-color); font-size: .65rem; font-weight: 700; letter-spacing: .16em; margin: 0 0 .8rem; text-transform: uppercase; }
+.md-content:has(.project-kicker) .md-typeset h1 { color: var(--md-default-fg-color); font-size: clamp(1.7rem, 4vw, 2.5rem); font-weight: 700; letter-spacing: -.045em; line-height: 1.12; margin-bottom: .75rem; max-width: 20ch; }
+.md-typeset .project-lead { color: var(--md-default-fg-color--light); font-size: 1rem; line-height: 1.65; max-width: 55ch; margin-bottom: 1.6rem; }
+.md-content:has(.project-kicker) .md-typeset h2 { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; margin: 1.5rem 0 .75rem; }
+.md-content:has(.project-kicker) .md-typeset h2::before { display: none; }
+.md-content:has(.project-kicker) .mermaid { background: var(--md-code-bg-color); border: 1px solid var(--md-default-fg-color--lightest); border-radius: 1rem; padding: 1rem .5rem; margin: 1rem 0; text-align: center; --md-mermaid-label-fg-color: #183452; --md-mermaid-label-bg-color: #e8effa; --md-mermaid-edge-color: #60738a; }
+.md-content:has(.project-kicker) p:has(> .overview-link) { display: flex; flex-wrap: wrap; gap: .55rem; margin: 1.2rem 0 1.6rem; }
+.md-typeset a.overview-link { border: 1px solid var(--md-default-fg-color--lightest); border-radius: .6rem; padding: .55rem .85rem; font-size: .72rem; font-weight: 600; transition: border-color .15s ease, background .15s ease; }
+.md-typeset a.overview-link:hover, .md-typeset a.overview-link:focus-visible { border-color: var(--md-typeset-a-color); background: var(--md-code-bg-color); }
+.md-content:has(.project-kicker) .md-typeset .admonition { box-shadow: none; border-radius: .6rem; }
+@media (max-width: 600px) { .md-typeset .project-lead { font-size: .85rem; } .md-content:has(.project-kicker) .mermaid { padding: .75rem .15rem; } }
+@media (prefers-reduced-motion: reduce) { .md-typeset a.overview-link { transition: none; } }

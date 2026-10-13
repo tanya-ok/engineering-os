@@ -1,0 +1,12 @@
+# Explicit build decisions; unreviewed dependency scripts fail closed.
+strictDepBuilds: true
+allowBuilds:
+  better-sqlite3: true
+  onnxruntime-node: true
+  sharp: true
+  protobufjs: false
+overrides:
+  adm-zip: ">=0.6.1"
+  postcss: ">=8.5.23"
+  sharp: ">=0.35.5"
+  source-map-js: ">=1.2.2"

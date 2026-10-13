@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { DEFAULT_MODEL } from "./embed.js";
+import { checkBind, envFlag } from "./host-guard.js";
 
 export interface VaultEntry {
   vault_id: string;
@@ -53,6 +54,7 @@ export function expandVars(s: string, lookup: (name: string) => string | undefin
 export function expandPath(raw: string, env: Env): string {
   const withHome = expandTilde(raw, env.HOME);
   const expanded = expandVars(withHome, (k) => env[k]);
+  if (expanded.trim() === "") throw new Error("config resolves to an empty path");
   return path.resolve(expanded);
 }
 
@@ -187,7 +189,8 @@ export function loadConfig(
       throw new Error("each vault needs string 'vault_id' and 'path_default'");
     }
     const pathEnv = typeof rv.path_env === "string" ? rv.path_env : undefined;
-    const rawPath = (pathEnv !== undefined ? env[pathEnv] : undefined) ?? rv.path_default;
+    const envPath = pathEnv !== undefined ? env[pathEnv] : undefined;
+    const rawPath = envPath === undefined || envPath.trim() === "" ? rv.path_default : envPath;
     const resolved = canonicalize(expandPath(rawPath, env));
     checkDiode(rv.vault_id, resolved, allowedRoots);
     const extensions = asStringArray(rv.extensions, "extensions");
@@ -202,6 +205,18 @@ export function loadConfig(
       resolved_path: resolved,
     };
   });
+
+  const ids = new Set<string>();
+  for (const vault of vaults) {
+    if (!vault.vault_id.trim() || ids.has(vault.vault_id))
+      throw new Error("vault_id must be unique and nonempty");
+    ids.add(vault.vault_id);
+    for (const other of vaults) {
+      if (other === vault) continue;
+      if (isUnder(vault.resolved_path, other.resolved_path))
+        throw new Error("Vault paths must not overlap");
+    }
+  }
 
   const indexDb =
     overrides.indexDb ??
@@ -233,6 +248,14 @@ export function resolvePort(flag: string | undefined, env: Env, fallback = 8765)
   return port;
 }
 
-export function resolveHost(flag: string | undefined, env: Env): string {
-  return flag ?? env.EOS_SERVER_HOST ?? "127.0.0.1";
+// Bind host: CLI flag > EOS_SERVER_HOST > 127.0.0.1. Non-loopback needs
+// --allow-remote or EOS_SERVER_ALLOW_REMOTE=1.
+export function resolveHost(
+  flag: string | undefined,
+  env: Env,
+  allowRemote = false,
+): { host: string; warning?: string } {
+  const host = flag ?? env.EOS_SERVER_HOST ?? "127.0.0.1";
+  const warning = checkBind(host, allowRemote || envFlag(env.EOS_SERVER_ALLOW_REMOTE));
+  return warning === undefined ? { host } : { host, warning };
 }

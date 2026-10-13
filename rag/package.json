@@ -1,8 +1,18 @@
 {
   "name": "eos-rag",
   "version": "0.2.1",
+  "private": true,
   "description": "Local hybrid RAG layer for engineering-os: transformers.js + SQLite (sqlite-vec + FTS5)",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tanya-ok/engineering-os.git",
+    "directory": "rag"
+  },
+  "homepage": "https://tanya-ok.github.io/engineering-os/",
+  "bugs": {
+    "url": "https://github.com/tanya-ok/engineering-os/issues"
+  },
   "type": "module",
   "bin": {
     "eos-rag": "dist/cli.js"
@@ -10,7 +20,7 @@
   "engines": {
     "node": ">=26"
   },
-  "packageManager": "pnpm@10.34.5",
+  "packageManager": "pnpm@12.10.1",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
@@ -20,22 +30,10 @@
   },
   "dependencies": {
     "@hono/node-server": "2.1.1",
-    "@huggingface/transformers": "4.2.0",
+    "@huggingface/transformers": "4.3.1",
     "better-sqlite3": "13.0.3",
     "hono": "4.13.7",
     "sqlite-vec": "0.1.9"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "onnxruntime-node",
-      "sharp"
-    ],
-    "overrides": {
-      "adm-zip": ">=0.6.0",
-      "postcss": ">=8.5.23",
-      "sharp": ">=0.35.0"
-    }
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
@@ -43,5 +41,12 @@
     "@types/node": "26.4.1",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
-  }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "vaults.example.json",
+    "routing.example.json"
+  ]
 }

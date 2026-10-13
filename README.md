@@ -16,32 +16,19 @@ knowledge base, wired into AI coding agents.
 - A local **hybrid RAG index** over your vault: SQLite + sqlite-vec + FTS5,
   vector search fused with BM25, optional MMR reranking. A small TypeScript
   service, no Python, no PyTorch, no cloud. Your notes never leave your machine.
-- An HTTP search server your AI agent (Claude Code or any MCP-capable client)
-  can query for grounded context.
+- A local HTTP search API (`POST /search`) that an AI agent such as Claude
+  Code, or any script that can send an HTTP request, queries for grounded
+  context. It is a plain HTTP API, not an MCP server.
 - ADR scaffolding, weekly review structure, and an index layer
   (`_Index/Vault Map`, `Active Context`, `Open Loops`) designed to be loaded
   into an agent session as working context.
 - A local **work-graph dashboard** over beads: issues by project, dependency
   edges, and the ready queue, read-only through `bd export`.
 
-## The one rule to remember
-
-The line that settles every infra-versus-app argument: infrastructure owns the
-container, developers own the contents.
-
-<p align="center">
-  <a href="https://tanya-ok.github.io/engineering-os/boundary/">
-    <img src="docs/assets/boundary.svg" alt="The container is Infrastructure's; the contents are the developers'" width="820">
-  </a>
-</p>
-
-The database engine is infra; the rows are the app's. The bucket is infra; the
-files in it are the app's. [More on the boundary](https://tanya-ok.github.io/engineering-os/boundary/).
-
 ## Quickstart (15 minutes)
 
 ```sh
-git clone https://github.com/YOUR_USER/engineering-os.git
+git clone https://github.com/tanya-ok/engineering-os.git
 cd engineering-os
 ./scripts/setup.sh          # checks node + pnpm, builds rag/, copies example configs
 
@@ -141,7 +128,7 @@ example note showing the expected shape.
 
 ## Requirements
 
-- Node.js 24 (active LTS) and pnpm.
+- Node.js >=26 and pnpm (see the packageManager version in each package).
 - Obsidian (optional but recommended)
 
 The first index run downloads the embedding model
@@ -152,7 +139,8 @@ retrieval works out of the box); `rag/vaults.json` can swap it for
 
 ## Status
 
-Shipped in v0.1:
+Available now (no tagged release yet; `eos-rag` is at 0.2.1 and
+`eos-dashboard` at 0.1.0):
 
 - Three-vault template (work, ai, user) with a write-routing contract and the
   diode guardrail that keeps personal data out of a work-side index.
@@ -164,14 +152,32 @@ Shipped in v0.1:
   skill that shows ready tasks next to the vault's open loops.
 - Work-graph dashboard (`dashboard/`): the beads graph by project, ready queue,
   and a private overlay kept out of the repo.
-- A docs site (MkDocs Material) on GitHub Pages with a custom theme.
+- A Zensical documentation site with a prepared GitHub Pages workflow and a custom theme.
 
 Next:
 
 - Claude Code hooks (session context loader, secret scan, session-end log).
-- Work tracking Phase B/C: a Linear adapter and planning skills.
+- Optional live tracker synchronization beyond the read-only beads, JSON and GitHub snapshot adapters.
 - Release automation.
+
+## Limits and security
+
+- Single-user, local tools. Neither server has authentication. Both bind
+  127.0.0.1 and refuse a non-loopback address unless `--allow-remote` is given.
+- Both servers accept only loopback `Host` headers (DNS rebinding protection)
+  and same-origin `application/json` POST requests. The dashboard also sends a
+  restrictive Content Security Policy and related security headers.
+- The index database holds the full text of your notes; protect it like the
+  vaults themselves.
+- The dashboard reads trackers through read-only exports. Agent plans are
+  recorded only; nothing is executed.
+- The first index run downloads the embedding model; later runs are offline.
+
+Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+Full documentation: <https://tanya-ok.github.io/engineering-os/>.
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+See [Planning and synthetic demo](docs/dashboard-planning.md) for quarterly reporting, agent plans, rendered architecture diagrams and experimental local qualification.

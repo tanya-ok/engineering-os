@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Identity-leak gate. Blocks content that would tie this public repo to a
-# specific person, machine, or employer. Generic patterns are built in;
+# specific person, machine, or organization. Generic patterns are built in;
 # maintainers add private patterns (names, org identifiers) to
 # scripts/anonymization-patterns.local.txt (gitignored, one regex per line).
 #
