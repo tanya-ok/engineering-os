@@ -108,6 +108,43 @@ function dot(a: Float32Array, b: Float32Array): number {
   return sum;
 }
 
+// MMR over fused scores. RRF scores sit near 1/60 while cosine redundancy is
+// near 1, so relevance is min-max normalized first; otherwise the redundancy
+// term dominates and relevant near-duplicates of the first pick are dropped.
+export function mmrSelect(
+  candidates: number[],
+  scores: Map<number, number>,
+  vectors: Map<number, Float32Array>,
+  top: number,
+  lambda: number,
+): number[] {
+  const pool = candidates.filter((c) => vectors.has(c));
+  const raw = pool.map((c) => scores.get(c) ?? 0);
+  const min = Math.min(...raw);
+  const span = Math.max(...raw) - min;
+  const relevance = (c: number): number => (span > 0 ? ((scores.get(c) ?? 0) - min) / span : 1);
+  const selected: number[] = [];
+  while (pool.length > 0 && selected.length < top) {
+    let best = pool[0] as number;
+    let bestVal = Number.NEGATIVE_INFINITY;
+    for (const cand of pool) {
+      const cv = vectors.get(cand) as Float32Array;
+      let redundancy = 0;
+      for (const s of selected) {
+        redundancy = Math.max(redundancy, dot(cv, vectors.get(s) as Float32Array));
+      }
+      const val = lambda * relevance(cand) - (1 - lambda) * redundancy;
+      if (val > bestVal) {
+        best = cand;
+        bestVal = val;
+      }
+    }
+    selected.push(best);
+    pool.splice(pool.indexOf(best), 1);
+  }
+  return selected;
+}
+
 function mmrRerank(
   db: Database.Database,
   candidates: number[],
@@ -121,27 +158,7 @@ function mmrRerank(
     const row = stmt.get(cid) as { embedding: Buffer } | undefined;
     if (row !== undefined) vectors.set(cid, bufferToF32(row.embedding));
   }
-  const selected: number[] = [];
-  const pool = candidates.filter((c) => vectors.has(c));
-  while (pool.length > 0 && selected.length < top) {
-    let best = pool[0] as number;
-    let bestVal = Number.NEGATIVE_INFINITY;
-    for (const cand of pool) {
-      const cv = vectors.get(cand) as Float32Array;
-      let redundancy = 0;
-      for (const s of selected) {
-        redundancy = Math.max(redundancy, dot(cv, vectors.get(s) as Float32Array));
-      }
-      const val = lambda * (scores.get(cand) ?? 0) - (1 - lambda) * redundancy;
-      if (val > bestVal) {
-        best = cand;
-        bestVal = val;
-      }
-    }
-    selected.push(best);
-    pool.splice(pool.indexOf(best), 1);
-  }
-  return selected;
+  return mmrSelect(candidates, scores, vectors, top, lambda);
 }
 
 async function runSearch(
