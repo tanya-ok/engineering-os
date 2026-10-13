@@ -64,10 +64,11 @@ const chunkLens = db
   .all()
   .map((r) => r.n);
 const pct = (p) => chunkLens[Math.min(chunkLens.length - 1, Math.floor(p * chunkLens.length))];
-const app = createApp(db, embedder, cfg.embed_model);
+const BIND = { host: "127.0.0.1", port: 8765 };
+const app = createApp(db, embedder, cfg.embed_model, BIND);
 
 async function search(query, extra, top = TOP) {
-  const res = await app.request("/search", {
+  const res = await app.request(`http://${BIND.host}:${BIND.port}/search`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ query, top, ...extra }),
