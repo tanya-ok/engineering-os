@@ -3,6 +3,12 @@
 Rules for any AI agent (Claude Code, local LLMs, MCP clients) working in this
 repo or in a vault created from `vault-template/`.
 
+## Local maintainer instructions
+
+- At the start of every task, check whether `AGENTS.local.md` exists in the repository root.
+- If it exists, read it and follow it together with this file. It is git-ignored: never commit it and never quote it in tracked files, commit messages, issues or pull requests.
+- It may add restrictions. It must not relax or contradict this file. If the two conflict, follow this file and report the conflict to the maintainer.
+
 ## The contract: unified reading, segregated writing
 
 - **Reading**: all three vaults (work, ai, user) are indexed together. Query

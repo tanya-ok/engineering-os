@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import type { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 
 import { createApp } from "./server.js";
@@ -9,10 +10,25 @@ import { IssueStore } from "./store.js";
 const PKG = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FIXTURE = path.join(PKG, "fixtures", "beads.sample.jsonl");
 const PUBLIC = path.join(PKG, "public");
+const BIND = { host: "127.0.0.1", port: 8766 };
+const BASE = "http://127.0.0.1:8766";
+
+function local(instance: Hono) {
+  return {
+    request: (p: string, init?: RequestInit) => instance.request(`${BASE}${p}`, init),
+  };
+}
 
 function app() {
   const store = new IssueStore({ kind: "jsonl", path: FIXTURE }, 60_000);
-  return createApp(store, PUBLIC, { projects: { "harbor-gps": { label: "Harbor GPS" } } });
+  return local(
+    createApp(
+      store,
+      PUBLIC,
+      { projects: { "orchard-search": { label: "Orchard Search" } } },
+      { bind: BIND },
+    ),
+  );
 }
 
 describe("api", () => {
@@ -27,7 +43,7 @@ describe("api", () => {
 
   it("serves the public config only", async () => {
     const body = await (await app().request("/api/config")).json();
-    expect(body).toEqual({ projects: { "harbor-gps": { label: "Harbor GPS" } } });
+    expect(body).toEqual({ projects: { "orchard-search": { label: "Orchard Search" } } });
   });
 
   it("filters issues by project and hides closed ones by default", async () => {
@@ -106,12 +122,115 @@ describe("static files", () => {
 describe("source privacy", () => {
   it("does not return source paths or filesystem errors", async () => {
     const store = new IssueStore({ kind: "jsonl", path: "/private/nonexistent/export.jsonl" }, 0);
-    const api = createApp(store, PUBLIC, { projects: {} });
+    const api = local(createApp(store, PUBLIC, { projects: {} }, { bind: BIND }));
     const health = await (await api.request("/api/health")).json();
     expect(health).toMatchObject({ status: "degraded", source: "jsonl" });
     expect(JSON.stringify(health)).not.toContain("/private");
     const response = await api.request("/api/issues");
     expect(response.status).toBe(503);
     expect(await response.text()).not.toContain("/private");
+  });
+});
+
+it("blocks cross-site session mutations and disables fixture planning", async () => {
+  const instance = app();
+  const state = (await (await instance.request("/api/sessions")).json()) as {
+    enabled: boolean;
+    execution_enabled: boolean;
+  };
+  expect(state.enabled).toBe(false);
+  expect(state.execution_enabled).toBe(false);
+  expect(
+    (
+      await instance.request("/api/sessions", {
+        method: "POST",
+        headers: { origin: "https://external.example" },
+        body: "{}",
+      })
+    ).status,
+  ).toBe(403);
+  expect(
+    (
+      await instance.request("/api/sessions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ task: "x".repeat(9000) }),
+      })
+    ).status,
+  ).toBe(413);
+});
+it("reports source freshness without exposing filesystem locations", async () => {
+  const response = (await (await app().request("/api/sources")).json()) as {
+    sources: { count: number; last_read_at: string | null }[];
+  };
+  expect(response.sources[0]?.count).toBe(30);
+  expect(response.sources[0]?.last_read_at).not.toBeNull();
+  expect(JSON.stringify(response)).not.toContain(FIXTURE);
+});
+
+describe("local request guard", () => {
+  const raw = () =>
+    createApp(
+      new IssueStore({ kind: "jsonl", path: FIXTURE }, 60_000),
+      PUBLIC,
+      { projects: {} },
+      {
+        bind: BIND,
+      },
+    );
+
+  it("accepts loopback Host names on the bound port only", async () => {
+    for (const host of ["127.0.0.1:8766", "localhost:8766", "[::1]:8766"]) {
+      expect((await raw().request(`${BASE}/api/health`, { headers: { host } })).status).toBe(200);
+    }
+    for (const host of ["rebind.example:8766", "127.0.0.1:1234", "localhost"]) {
+      expect((await raw().request(`${BASE}/api/issues`, { headers: { host } })).status).toBe(403);
+      expect((await raw().request(`${BASE}/`, { headers: { host } })).status).toBe(403);
+    }
+  });
+
+  it("compares Origin with the bound loopback origin, not the Host header", async () => {
+    const post = (headers: Record<string, string>) =>
+      raw().request(`${BASE}/api/sessions`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...headers },
+        body: "{}",
+      });
+    expect((await post({ origin: "http://rebind.example:8766" })).status).toBe(403);
+    expect((await post({ host: "localhost:8766", origin: "http://attacker.example" })).status).toBe(
+      403,
+    );
+    expect((await post({ "sec-fetch-site": "same-site" })).status).toBe(403);
+    expect((await post({ origin: BASE })).status).toBe(503);
+    expect((await post({ origin: "http://localhost:8766", host: "localhost:8766" })).status).toBe(
+      503,
+    );
+  });
+
+  it("requires JSON on POST", async () => {
+    const res = await raw().request(`${BASE}/api/sessions/x/cancel`, {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body: "{}",
+    });
+    expect(res.status).toBe(415);
+  });
+});
+
+describe("security headers", () => {
+  it("sets CSP and hardening headers on pages, API and rejected requests", async () => {
+    const page = await app().request("/");
+    const api = await app().request("/api/health");
+    const rejected = await app().request("/api/health", { headers: { host: "rebind.example" } });
+    for (const res of [page, api, rejected]) {
+      expect(res.headers.get("content-security-policy")).toBe(
+        "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'",
+      );
+      expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+      expect(res.headers.get("referrer-policy")).toBe("no-referrer");
+      expect(res.headers.get("x-frame-options")).toBe("DENY");
+      expect(res.headers.get("strict-transport-security")).toBeNull();
+    }
+    expect(rejected.status).toBe(403);
   });
 });

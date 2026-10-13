@@ -1,8 +1,18 @@
 {
   "name": "eos-dashboard",
   "version": "0.1.0",
+  "private": true,
   "description": "Work-graph dashboard for engineering-os: beads issues by project, dependencies, ready queue",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tanya-ok/engineering-os.git",
+    "directory": "dashboard"
+  },
+  "homepage": "https://tanya-ok.github.io/engineering-os/",
+  "bugs": {
+    "url": "https://github.com/tanya-ok/engineering-os/issues"
+  },
   "type": "module",
   "bin": {
     "eos-dashboard": "dist/cli.js"
@@ -10,7 +20,7 @@
   "engines": {
     "node": ">=26"
   },
-  "packageManager": "pnpm@10.34.5",
+  "packageManager": "pnpm@12.10.1",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node build.mjs",
     "build:web": "node build.mjs",
@@ -38,12 +48,12 @@
     "typescript": "7.0.2",
     "vitest": "5.0.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ],
-    "overrides": {
-      "postcss": ">=8.5.23"
-    }
-  }
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "public",
+    "fixtures",
+    "dashboard.example.json"
+  ]
 }

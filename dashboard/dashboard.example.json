@@ -4,10 +4,10 @@
   "ttl_seconds": 30,
   "external_ref_url": "https://tracker.example/issue/{ref}",
   "projects": {
-    "harbor-gps": {
-      "label": "Harbor GPS",
-      "path": "~/work/workspace/gps",
-      "url": "https://example.com/harbor"
+    "orchard-search": {
+      "label": "Orchard Search",
+      "path": "~/work/workspace/search",
+      "url": "https://example.com/orchard"
     }
   }
 }

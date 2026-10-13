@@ -14,6 +14,7 @@ export interface GraphNode {
   priority?: number;
   issue_type?: string;
   labels?: string[];
+  closed_at?: string;
   domain?: string;
   /** Open blockers (dependencies of type `blocks` that are not closed). */
   blockers?: number;
@@ -73,7 +74,7 @@ export function openBlockers(issue: Issue, byId: Map<string, Issue>): number {
   for (const d of issue.dependencies) {
     if (d.type !== "blocks") continue;
     const dep = byId.get(d.to);
-    if (dep !== undefined && dep.status !== CLOSED) n += 1;
+    if (dep === undefined || dep.status !== CLOSED) n += 1;
   }
   return n;
 }
@@ -155,6 +156,7 @@ export function buildGraph(issues: Issue[], opts: GraphOptions = {}): Graph {
     priority: i.priority,
     issue_type: i.issue_type,
     labels: i.labels,
+    closed_at: i.closed_at,
     domain: i.domain,
     blockers: openBlockers(i, byId),
     dependents: dependents.get(i.id) ?? 0,

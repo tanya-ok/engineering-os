@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="640" viewBox="0 0 1120 640" role="img" aria-labelledby="title desc">
+<title id="title">Two ways to work with agents</title><desc id="desc">Direct Claude Code is a manual workflow · dashboard execution is not enabled</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#667a96"/></marker></defs>
+<rect width="1120" height="640" rx="20" fill="#f7f9fc"/>
+<style>text{font-family:Arial,sans-serif;fill:#172b4d}.caption{font-size:13px;fill:#53657d}.label{font-size:17px;font-weight:600}.lane{font-size:12px;font-weight:bold;letter-spacing:1.5px}.edge{fill:none;stroke:#667a96;stroke-width:2;marker-end:url(#arrow)}</style>
+<text x="32" y="42" font-size="25" font-weight="bold">Two ways to work with agents</text>
+<text x="32" y="68" class="caption">Direct Claude Code is a manual workflow · dashboard execution is not enabled</text>
+<rect x="24" y="98" width="1072" height="190" rx="14" fill="#e9f3f1"/><text x="40" y="123" class="lane">AVAILABLE NOW - DIRECT CLAUDE CODE</text>
+<rect x="24" y="311" width="1072" height="230" rx="14" fill="#eef0f7"/><text x="40" y="336" class="lane">DASHBOARD - PREPARATION AND FUTURE EXECUTION</text>
+<path class="edge" d="M267 196H307"/>
+<path class="edge" d="M530 196H570"/>
+<path class="edge" d="M793 196H833"/>
+<path class="edge" d="M267 423H307"/>
+<path class="edge" d="M530 423H570" stroke-dasharray="7 5"/>
+<path class="edge" d="M793 423H833" stroke-dasharray="7 5"/>
+<rect x="44" y="145" width="223" height="102" rx="10" fill="#ecfaf4" stroke="#49a58d" stroke-width="1.5"/><text x="60" y="173" class="label">Choose existing task</text>
+<text x="60" y="196" class="caption">Owning repository + Beads ID</text>
+<text x="60" y="215" class="caption">Follow repository instructions</text>
+<rect x="307" y="145" width="223" height="102" rx="10" fill="#ecfaf4" stroke="#49a58d" stroke-width="1.5"/><text x="323" y="173" class="label">Claude Code</text>
+<text x="323" y="196" class="caption">Work in that repository</text>
+<text x="323" y="215" class="caption">Run tests and review changes</text>
+<rect x="570" y="145" width="223" height="102" rx="10" fill="#ecfaf4" stroke="#49a58d" stroke-width="1.5"/><text x="586" y="173" class="label">Accept and update</text>
+<text x="586" y="196" class="caption">Human accepts the result</text>
+<text x="586" y="215" class="caption">Update the owning tracker</text>
+<rect x="833" y="145" width="239" height="102" rx="10" fill="#ffffff" stroke="#7094d5" stroke-width="1.5"/><text x="849" y="173" class="label">Reload dashboard</text>
+<text x="849" y="196" class="caption">Reread source / snapshot</text>
+<text x="849" y="215" class="caption">Observe task status</text>
+<rect x="44" y="361" width="223" height="124" rx="10" fill="#ffffff" stroke="#7094d5" stroke-width="1.5"/><text x="60" y="389" class="label">Save a plan</text>
+<text x="60" y="412" class="caption">Task + repository</text>
+<text x="60" y="431" class="caption">Starting commit + dirty state</text>
+<text x="60" y="450" class="caption">No agent launched</text>
+<rect x="307" y="361" width="223" height="124" rx="10" fill="#fff8e6" stroke="#c89b42" stroke-width="1.5"/><text x="323" y="389" class="label">Qualification gate</text>
+<text x="323" y="412" class="caption">Verify runner isolation</text>
+<text x="323" y="431" class="caption">Verify model reliability</text>
+<text x="323" y="450" class="caption">Execution remains disabled</text>
+<rect x="570" y="361" width="223" height="124" rx="10" fill="#f2f4f7" stroke="#a0a9b8" stroke-width="1.5" stroke-dasharray="6 4"/><text x="586" y="389" class="label">Isolated execution</text>
+<text x="586" y="412" class="caption">PROPOSED</text>
+<text x="586" y="431" class="caption">Worktree + scoped permissions</text>
+<text x="586" y="450" class="caption">Run / cancel / inspect</text>
+<rect x="833" y="361" width="239" height="124" rx="10" fill="#f2f4f7" stroke="#a0a9b8" stroke-width="1.5" stroke-dasharray="6 4"/><text x="849" y="389" class="label">Review and accept</text>
+<text x="849" y="412" class="caption">PROPOSED</text>
+<text x="849" y="431" class="caption">Review diff and test results</text>
+<text x="849" y="450" class="caption">Owner controls publication</text>
+<text x="32" y="583" class="caption">Green: manual workflow. Blue: implemented. Amber: blocked gate. Dashed grey: proposed.</text>
+<text x="32" y="604" class="caption">Cancel plan cancels only the saved plan. It does not stop a Claude Code session. No automatic tracker closure.</text>
+</svg>

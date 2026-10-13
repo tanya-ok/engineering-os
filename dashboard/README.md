@@ -22,8 +22,8 @@ fixture (`fixtures/beads.sample.jsonl`).
 - **Graph**: one node per issue, sized by how many issues it blocks. Solid
   arrows are `blocks` edges drawn in execution order (blocker to dependent);
   dashed lines are `parent-child`; dotted lines are `discovered-from` and
-  `relates_to`. Square hubs are projects (the id prefix, e.g. `harbor-gps` for
-  `harbor-gps-r2s`). Vermillion fill = in progress, vermillion ring = blocked,
+  `relates_to`. Square hubs are projects (the id prefix, e.g. `orchard-search` for
+  `orchard-search-r2s`). Vermillion fill = in progress, vermillion ring = blocked,
   dark ring = ready. Hover to focus neighbours, click for the detail panel.
 - **Projects**: counts per project (open, ready, blocked, in progress,
   deferred, closed), domains from `domain:` labels, epics.
@@ -42,13 +42,14 @@ an `external_ref` into a URL. See `dashboard.example.json`.
   "ttl_seconds": 30,
   "external_ref_url": "https://tracker.example/issue/{ref}",
   "projects": {
-    "harbor-gps": { "label": "Harbor GPS", "path": "~/work/workspace/gps", "url": "https://example.com/harbor" }
+    "orchard-search": { "label": "Orchard Search", "path": "~/work/workspace/search", "url": "https://example.com/orchard" }
   }
 }
 ```
 
 Only `external_ref_url` and `projects` reach the browser (`GET /api/config`);
-paths and the workspace location stay on the server side.
+paths and the workspace location stay on the server side. Link fields must be
+absolute http or https URLs; anything else is a config error.
 
 ## API
 
@@ -73,7 +74,13 @@ pnpm --dir dashboard test
 ```
 
 Only `bd export --no-memories` is ever executed, read-only, in the configured
-workspace. The server binds 127.0.0.1 unless `--host` says otherwise.
+workspace. The server has no authentication and binds 127.0.0.1. A
+non-loopback `--host` is refused unless `--allow-remote` (or
+`EOS_DASHBOARD_ALLOW_REMOTE=1`) is given, and then it prints a warning. Every
+request must carry a loopback `Host` header (`127.0.0.1`, `localhost` or
+`[::1]` with the serving port) to block DNS rebinding. POST requests require
+`Content-Type: application/json`, and their `Origin` must match the bound
+loopback origin.
 
 Private overlays are loaded only with `--config dashboard/dashboard.json`.
 `--fixture` ignores overlays, including an explicitly supplied config, so demo

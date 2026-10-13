@@ -1,0 +1,62 @@
+[project]
+site_name = "engineering-os"
+site_description = "Local knowledge retrieval, portable work tracking and read-only review evidence."
+site_url = "https://tanya-ok.github.io/engineering-os/"
+repo_url = "https://github.com/tanya-ok/engineering-os"
+repo_name = "tanya-ok/engineering-os"
+edit_uri = "edit/main/docs/"
+docs_dir = "docs"
+site_dir = "site"
+extra_css = ["assets/extra.css", "assets/overview.css"]
+exclude_docs = "local-workspace-review.md"
+nav = [
+  { "Home" = "index.md" },
+  { "Start locally" = "quickstart.md" },
+  { "Architecture" = "architecture.md" },
+  { "Work dashboard" = "dashboard.md" },
+  { "Reference" = [
+  { "Concepts" = "concepts.md" },
+  { "Five domains" = "domains.md" },
+  { "Local retrieval" = "rag.md" },
+  { "Standards" = "standards.md" },
+  { "Work tracking" = "working-layer.md" },
+  { "Portable portfolio" = "portable-portfolio.md" },
+] },
+  { "For maintainers" = [
+  { "Publication readiness" = "publication-readiness.md" },
+  { "Dashboard planning" = "dashboard-planning.md" },
+  { "History cleanup" = "history-cleanup.md" },
+] },
+]
+
+[project.theme]
+language = "en"
+features = ["content.code.copy", "navigation.top", "search.highlight"]
+
+[project.markdown_extensions]
+pymdownx.tasklist.custom_checkbox = true
+admonition = {}
+attr_list = {}
+tables = {}
+toc.permalink = true
+pymdownx.details = {}
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+pymdownx.tabbed.alternate_style = true
+
+[project.theme.font]
+text = "IBM Plex Sans"
+code = "IBM Plex Mono"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"

@@ -15,11 +15,14 @@ env:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         package: [rag, dashboard]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           package_json_file: ${{ matrix.package }}/package.json
@@ -34,11 +37,14 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         package: [rag, dashboard]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           package_json_file: ${{ matrix.package }}/package.json
@@ -51,14 +57,17 @@ jobs:
       # Unit tests only. The rag end-to-end suite (EOS_E2E=1) downloads the
       # embedding model and is run locally, not in CI.
       - run: pnpm --dir ${{ matrix.package }} run build
+      - run: node scripts/check-packages.mjs ${{ matrix.package }}
       - run: pnpm --dir ${{ matrix.package }} test
 
   anonymization:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Test anonymization gate
         run: bash scripts/anonymization-check.test.sh
       - name: Anonymization gate (full tree)
@@ -69,10 +78,12 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Install pinned Gitleaks
         env:
           GITLEAKS_VERSION: 8.24.3

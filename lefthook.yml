@@ -5,9 +5,12 @@ pre-commit:
   commands:
     anonymization:
       run: scripts/anonymization-check.sh staged
-    biome:
+    biome-rag:
       glob: "rag/**/*.{ts,json}"
       run: pnpm --dir rag exec biome check .
+    biome-dashboard:
+      glob: "dashboard/**/*.{ts,tsx,mjs,json}"
+      run: pnpm --dir dashboard exec biome check .
 
 pre-push:
   commands:

@@ -4,7 +4,13 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { expandPath, loadDashboardConfig, publicConfig, runtimeConfig } from "./config.js";
+import {
+  expandPath,
+  loadDashboardConfig,
+  publicConfig,
+  resolveHost,
+  runtimeConfig,
+} from "./config.js";
 
 let dir = "";
 beforeEach(() => {
@@ -42,6 +48,23 @@ describe("loadDashboardConfig", () => {
     expect(() => loadDashboardConfig(write({ beads_root: 1 }))).toThrow(/beads_root/);
   });
 
+  it("accepts only http and https links", () => {
+    const ok = loadDashboardConfig(
+      write({
+        external_ref_url: "https://tracker.example/issue/{ref}",
+        projects: { p: { url: "http://127.0.0.1:3000/p" } },
+      }),
+    );
+    expect(ok.projects?.p?.url).toBe("http://127.0.0.1:3000/p");
+    for (const url of ["javascript:alert(1)", "data:text/html,x", "/relative", "file:///etc"]) {
+      expect(() => loadDashboardConfig(write({ projects: { p: { url } } }))).toThrow(/http/);
+      expect(() => loadDashboardConfig(write({ external_ref_url: url }))).toThrow(/http/);
+    }
+    expect(() => loadDashboardConfig(write({ external_ref_url: "javascript:{ref}" }))).toThrow(
+      /external_ref_url/,
+    );
+  });
+
   it("exposes only presentation fields to the browser", () => {
     const pub = publicConfig({
       beads_root: "/private/workspace",
@@ -72,5 +95,23 @@ describe("runtimeConfig", () => {
   });
   it("loads an explicitly selected workspace overlay", () => {
     expect(runtimeConfig(false, write({ beads_root: "/data/work" })).beads_root).toBe("/data/work");
+  });
+});
+
+describe("resolveHost", () => {
+  it("defaults to loopback and honours the env host", () => {
+    expect(resolveHost(undefined, {})).toEqual({ host: "127.0.0.1" });
+    expect(resolveHost(undefined, { EOS_DASHBOARD_HOST: "::1" })).toEqual({ host: "::1" });
+  });
+
+  it("refuses a non-loopback host without an explicit override", () => {
+    expect(() => resolveHost("0.0.0.0", {})).toThrow(/--allow-remote/);
+    expect(() => resolveHost(undefined, { EOS_DASHBOARD_HOST: "192.0.2.1" })).toThrow(
+      /non-loopback/,
+    );
+    expect(resolveHost("0.0.0.0", {}, true).warning).toMatch(/^warning:/);
+    expect(resolveHost("0.0.0.0", { EOS_DASHBOARD_ALLOW_REMOTE: "true" }).warning).toMatch(
+      /^warning:/,
+    );
   });
 });

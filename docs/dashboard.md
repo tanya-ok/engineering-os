@@ -3,7 +3,8 @@
 `eos-dashboard` renders the beads task graph the way the vault renders
 knowledge: issues grouped by **project**, dependency edges, the **ready queue**,
 and per-project counts. It is a local Hono API plus a React and d3 browser app,
-and it reads beads through `bd export` only, so it never writes to the tracker.
+and it reads local trackers without writing to them. Optional portable sources
+and review reports are described in [portable portfolio](portable-portfolio.md).
 
 
 ## Run it
@@ -20,8 +21,8 @@ Open http://127.0.0.1:8766. With no flag the source is resolved from
 
 ## What a project is
 
-beads ids carry their workspace as a prefix: `harbor-gps-r2s` belongs to
-`harbor-gps`. The dashboard groups by that prefix, so a multi-repo workspace
+beads ids carry their workspace as a prefix: `orchard-search-r2s` belongs to
+`orchard-search`. The dashboard groups by that prefix, so a multi-repo workspace
 that shares one `.beads` database still reads as separate projects. `repo:`
 and `domain:` labels are shown as chips and filters; the five vault domains
 come through the `domain:` label convention from
@@ -50,16 +51,18 @@ gitignored:
   "beads_root": "~/work/workspace",
   "external_ref_url": "https://tracker.example/issue/{ref}",
   "projects": {
-    "harbor-gps": { "label": "Harbor GPS", "path": "~/work/workspace/gps", "url": "https://example.com/harbor" }
+    "orchard-search": { "label": "Orchard Search", "path": "~/work/workspace/search", "url": "https://example.com/orchard" }
   }
 }
 ```
 
 Only `external_ref_url` and the project `label` / `url` fields reach the
-browser. Paths and the workspace location stay server-side, and the server
-binds `127.0.0.1` unless told otherwise. The full API is documented in
-`dashboard/README.md`; `eos-dashboard graph` prints the same graph as JSON
-for agents and scripts.
+browser; both link fields must be absolute http or https URLs. Paths and the
+workspace location stay server-side. The server binds `127.0.0.1`, refuses
+non-loopback hosts without `--allow-remote`, accepts only loopback `Host`
+headers, and checks `Origin` against the bound loopback origin on POST. The
+full API is documented in `dashboard/README.md`; `eos-dashboard graph` prints
+the same graph as JSON for agents and scripts.
 
 Private overlays are loaded only with `--config dashboard/dashboard.json`.
 `--fixture` ignores overlays, including an explicitly supplied config, so demo

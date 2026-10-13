@@ -1,7 +1,7 @@
 # agents
 
 Generic engineering agent roles. Implementations land in v0.2. Only
-vendor-neutral roles belong here; anything tied to a specific employer,
+vendor-neutral roles belong here; anything tied to a specific organization,
 compliance regime, or tracker stays out of the public kit.
 
 | Agent | Role |

@@ -33,7 +33,35 @@ export interface IssueDetail {
   dependents: LinkedIssue[];
 }
 
-export type View = "graph" | "projects" | "ready";
+export type View =
+  | "graph"
+  | "projects"
+  | "ready"
+  | "quarters"
+  | "sessions"
+  | "operations"
+  | "docs"
+  | "reviews";
+export const VIEWS: View[] = [
+  "graph",
+  "projects",
+  "ready",
+  "quarters",
+  "sessions",
+  "operations",
+  "reviews",
+  "docs",
+];
+export const VIEW_TITLES: Record<View, string> = {
+  graph: "Dependency graph",
+  projects: "Projects",
+  ready: "Ready queue",
+  quarters: "Quarterly review",
+  sessions: "Agent plans",
+  operations: "Data sources",
+  docs: "How it works",
+  reviews: "Reviews",
+};
 
 export interface Filters {
   projects: Set<string>;
@@ -44,5 +72,12 @@ export interface Filters {
   search: string;
 }
 
-export const STATUSES = ["open", "in_progress", "blocked", "deferred", "closed"] as const;
+export const STATUSES = [
+  "open",
+  "in_progress",
+  "blocked",
+  "deferred",
+  "unknown",
+  "closed",
+] as const;
 export const EDGE_TYPES = ["blocks", "parent-child", "discovered-from", "relates_to"] as const;

@@ -1,6 +1,6 @@
 // HTTP layer: a small JSON API over the issue store plus the static browser
-// app. Binds 127.0.0.1 unless told otherwise; nothing here is meant for the
-// open internet.
+// app. Loopback only unless remote binding is explicitly allowed; nothing here
+// is meant for the open internet.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -8,8 +8,14 @@ import path from "node:path";
 import { serve as honoServe } from "@hono/node-server";
 import { type Context, Hono } from "hono";
 
+import { bodyLimit } from "hono/body-limit";
+import { secureHeaders } from "hono/secure-headers";
 import type { PublicConfig } from "./config.js";
 import { buildGraph, readyQueue, summarizeProjects } from "./graph.js";
+import { type BindOptions, hostGuard } from "./host-guard.js";
+import type { ReviewSource } from "./review-types.js";
+import { readReviews } from "./reviews.js";
+import type { SessionPlans } from "./sessions.js";
 import type { IssueStore } from "./store.js";
 import type { Issue } from "./types.js";
 
@@ -79,9 +85,38 @@ async function withIssues(
   }
 }
 
-export function createApp(store: IssueStore, publicDir: string, config: PublicConfig): Hono {
+export interface AppOptions {
+  bind: BindOptions;
+  sessions?: SessionPlans | null;
+  reviews?: ReviewSource[];
+}
+
+export function createApp(
+  store: IssueStore,
+  publicDir: string,
+  config: PublicConfig,
+  options: AppOptions,
+): Hono {
+  const sessions = options.sessions ?? null;
+  const reviews = options.reviews ?? [];
   const app = new Hono();
   const root = path.resolve(publicDir);
+  app.use(
+    "*",
+    secureHeaders({
+      contentSecurityPolicy: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        frameAncestors: ["'none'"],
+      },
+      referrerPolicy: "no-referrer",
+      strictTransportSecurity: false,
+      xContentTypeOptions: "nosniff",
+      xFrameOptions: "DENY",
+    }),
+  );
+  app.use("*", hostGuard(options.bind));
 
   app.get("/api/health", async (c) => {
     let count = 0;
@@ -103,6 +138,58 @@ export function createApp(store: IssueStore, publicDir: string, config: PublicCo
       last_error: error === undefined ? null : "Issue source unavailable; data may be stale.",
     });
   });
+
+  app.get("/api/sessions", (c) =>
+    c.json({
+      enabled: sessions !== null,
+      execution_enabled: false,
+      qualification: sessions?.qualification() ?? null,
+      repositories: sessions?.repositories() ?? [],
+      sessions: sessions?.list() ?? [],
+    }),
+  );
+  app.use("/api/sessions", bodyLimit({ maxSize: 8192 }));
+  app.post("/api/sessions", async (c) => {
+    if (sessions === null) return c.json({ error: "Session planning disabled" }, 503);
+    const text = await c.req.text();
+    if (text.length > 8192) return c.json({ error: "Request too large" }, 413);
+    try {
+      const body = JSON.parse(text);
+      if (body === null || typeof body.repository !== "string" || typeof body.task !== "string")
+        return c.json({ error: "Repository and task are required" }, 400);
+      return c.json(sessions.create(body.repository, body.task), 201);
+    } catch {
+      return c.json(
+        { error: "Cannot prepare session. Check repository configuration and task length." },
+        400,
+      );
+    }
+  });
+  app.post("/api/sessions/:id/cancel", (c) => {
+    if (sessions === null) return c.json({ error: "Session planning disabled" }, 503);
+    try {
+      return c.json(sessions.cancel(c.req.param("id")));
+    } catch {
+      return c.json({ error: "Session not found" }, 404);
+    }
+  });
+
+  app.get("/api/sources", async (c) => {
+    try {
+      await store.get();
+    } catch {
+      /* Diagnostics must remain available during initial failure. */
+    }
+    return c.json({
+      sources: store.sourceStatus(),
+      error:
+        store.lastError === undefined
+          ? null
+          : "Graph refresh failed; the last complete graph is retained when available.",
+    });
+  });
+
+  app.get("/api/reviews", (c) => c.json(readReviews(reviews)));
 
   app.get("/api/config", (c) => c.json(config));
 

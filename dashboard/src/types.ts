@@ -2,6 +2,8 @@
 // `bd export` emits (beads JSONL), reduced to the fields the dashboard uses.
 
 export interface Dependency {
+  target_ref?: { source_id: string; repository_id: string; native_id: string };
+  unresolved?: boolean;
   /** The issue that carries the dependency: it depends on `to`. */
   from: string;
   /** The issue it depends on: the blocker, parent, or origin. */
@@ -10,7 +12,10 @@ export interface Dependency {
   type: string;
 }
 
+import type { WorkItem } from "./work-item-types.js";
+
 export interface Issue {
+  work_item?: WorkItem;
   id: string;
   title: string;
   status: string;

@@ -6,6 +6,8 @@ import {
   type Graph,
   type Health,
   STATUSES,
+  VIEW_TITLES,
+  VIEWS,
   type View,
 } from "../types.js";
 
@@ -51,14 +53,14 @@ export function Sidebar({ graph, filters, setFilters, view, setView, health, onR
       <h1 className="brand">Work graph</h1>
       <div className="brand-sub">{health?.source ?? "loading"}</div>
       <div className="views">
-        {(["graph", "projects", "ready"] as View[]).map((v) => (
+        {VIEWS.map((v) => (
           <button
-            key={v}
+            key={VIEW_TITLES[v]}
             type="button"
             className={view === v ? "active" : ""}
             onClick={() => setView(v)}
           >
-            {v}
+            {VIEW_TITLES[v]}
           </button>
         ))}
       </div>

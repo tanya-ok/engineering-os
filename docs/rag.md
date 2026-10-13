@@ -25,6 +25,13 @@ environment variables win over `.env` values). The serve port comes from
 then `EOS_SERVER_HOST`, then 127.0.0.1. An unparseable port is a hard error,
 not a silent fallback.
 
+The server has no authentication. A non-loopback bind address is refused
+unless `--allow-remote` (or `EOS_SERVER_ALLOW_REMOTE=1`) is given, and then it
+prints a warning. Every request must carry a loopback `Host` header
+(`127.0.0.1`, `localhost` or `[::1]` with the serving port), which blocks DNS
+rebinding. `POST /search` requires `Content-Type: application/json` and
+rejects foreign `Origin` and cross-site `Sec-Fetch-Site` headers.
+
 ## Search API
 
 `GET /health` returns `{status, model, files, chunks}`. `POST /search` accepts:

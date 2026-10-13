@@ -48,7 +48,7 @@ describe.skipIf(!enabled)("e2e over the shipped vault templates", () => {
     db = open(cfg.resolved_db);
     const stats = await indexAll(cfg, embedder, db);
     expect(stats.chunksWritten).toBeGreaterThan(0);
-    app = createApp(db, embedder, cfg.embed_model);
+    app = createApp(db, embedder, cfg.embed_model, { host: "127.0.0.1", port: 8765 });
   }, 900_000);
 
   afterAll(() => {
@@ -57,7 +57,7 @@ describe.skipIf(!enabled)("e2e over the shipped vault templates", () => {
   });
 
   async function search(body: unknown) {
-    return app.request("/search", {
+    return app.request("http://127.0.0.1:8765/search", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
@@ -73,7 +73,7 @@ describe.skipIf(!enabled)("e2e over the shipped vault templates", () => {
   }, 120_000);
 
   it("russian query retrieves cross-lingually", async () => {
-    const res = await search({ query: "как оформить architecture decision", top: 5, hybrid: true });
+    const res = await search({ query: "как записать архитектурное решение", top: 5, hybrid: true });
     expect(res.status).toBe(200);
     const { hits } = (await res.json()) as { hits: { path: string }[] };
     expect(hits.length).toBeGreaterThan(0);

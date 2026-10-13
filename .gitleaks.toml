@@ -1,5 +1,5 @@
 # Gitleaks config: default ruleset plus identity-leak rules for a repo
-# whose content must stay machine-agnostic and employer-agnostic.
+# whose content must stay machine-agnostic and organization-agnostic.
 
 [extend]
 useDefault = true
