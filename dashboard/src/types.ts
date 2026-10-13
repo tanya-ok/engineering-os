@@ -8,7 +8,7 @@ export interface Dependency {
   from: string;
   /** The issue it depends on: the blocker, parent, or origin. */
   to: string;
-  /** beads dependency type: blocks, parent-child, discovered-from, relates_to. */
+  /** beads dependency type: blocks, parent-child, discovered-from, relates-to, ... */
   type: string;
 }
 
@@ -26,6 +26,8 @@ export interface Issue {
   created_at: string;
   updated_at: string;
   closed_at?: string;
+  /** Hidden from the ready queue until this time, like `bd ready`. */
+  defer_until?: string;
   close_reason?: string;
   assignee?: string;
   owner?: string;

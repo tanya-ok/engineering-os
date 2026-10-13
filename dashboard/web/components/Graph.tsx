@@ -39,14 +39,16 @@ function fill(n: GraphNode): string {
 
 function stroke(n: GraphNode): string {
   if (n.kind === "project") return "var(--text)";
-  if ((n.blockers ?? 0) > 0 || n.status === "blocked") return "var(--accent)";
+  if ((n.blockers ?? 0) > 0 || n.status === "blocked" || n.parent_blocked === true) {
+    return "var(--accent)";
+  }
   if (n.ready === true) return "var(--text)";
   return "var(--border-strong)";
 }
 
 function dash(type: string): string | null {
   if (type === "parent-child") return "5 4";
-  if (type === "discovered-from" || type === "relates_to") return "1.5 4";
+  if (type !== "blocks" && type !== "member") return "1.5 4";
   return null;
 }
 
@@ -271,7 +273,7 @@ export function ForceGraph({ nodes, edges, search, selectedId, onSelect }: Props
           <i className="dashed" /> parent-child
         </span>
         <span>
-          <i className="dotted" /> discovered / relates
+          <i className="dotted" /> other links
         </span>
         <span>
           <b style={{ color: "var(--accent)" }}>●</b> in progress

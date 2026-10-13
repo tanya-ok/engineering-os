@@ -31,6 +31,11 @@ function str(v: unknown): string | undefined {
   return typeof v === "string" && v !== "" ? v : undefined;
 }
 
+// Older exports spelled the symmetric relation `relates_to`; bd 1.0 uses `relates-to`.
+function normalizeDepType(t: string): string {
+  return t === "relates_to" ? "relates-to" : t;
+}
+
 function normalizeDependencies(issueId: string, raw: unknown): Dependency[] {
   if (!Array.isArray(raw)) return [];
   const out: Dependency[] = [];
@@ -58,7 +63,7 @@ function normalizeDependencies(issueId: string, raw: unknown): Dependency[] {
     out.push({
       from: str(r.issue_id) ?? issueId,
       to,
-      type: str(r.type) ?? str(r.dependency_type) ?? "blocks",
+      type: normalizeDepType(str(r.type) ?? str(r.dependency_type) ?? "blocks"),
       ...(target ? { target_ref: target } : {}),
     });
   }
@@ -86,6 +91,7 @@ export function normalizeIssue(raw: unknown): Issue | undefined {
     created_at: str(r.created_at) ?? "",
     updated_at: str(r.updated_at) ?? "",
     closed_at: str(r.closed_at),
+    defer_until: str(r.defer_until),
     close_reason: str(r.close_reason),
     assignee: str(r.assignee),
     owner: str(r.owner),

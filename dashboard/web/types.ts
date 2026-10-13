@@ -25,10 +25,19 @@ export interface LinkedIssue {
   type: string;
   title: string | null;
   status: string | null;
+  /** Target is not in the source; a missing `blocks` target still blocks. */
+  missing: boolean;
+}
+
+export interface IssueState {
+  ready: boolean;
+  open_blockers: number;
+  parent_blocked: boolean;
 }
 
 export interface IssueDetail {
   issue: import("../src/types.js").Issue;
+  state: IssueState;
   dependencies: LinkedIssue[];
   dependents: LinkedIssue[];
 }
@@ -80,4 +89,10 @@ export const STATUSES = [
   "unknown",
   "closed",
 ] as const;
-export const EDGE_TYPES = ["blocks", "parent-child", "discovered-from", "relates_to"] as const;
+/** Edge types in the graph, excluding project membership, known ones first. */
+export function edgeTypesOf(edges: { type: string }[]): string[] {
+  const known = ["blocks", "parent-child", "discovered-from", "relates-to"];
+  const present = new Set(edges.map((e) => e.type).filter((t) => t !== "member"));
+  const rest = [...present].filter((t) => !known.includes(t)).sort();
+  return [...known.filter((t) => present.has(t)), ...rest];
+}

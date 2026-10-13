@@ -69,3 +69,16 @@ describe("parseExport", () => {
     expect(i?.dependencies).toEqual([]);
   });
 });
+
+describe("bd 1.0 fields", () => {
+  it("normalizes the legacy relates_to spelling and keeps defer_until", () => {
+    const i = normalizeIssue({
+      id: "p-1",
+      title: "t",
+      defer_until: "2026-12-01T00:00:00Z",
+      dependencies: [{ issue_id: "p-1", depends_on_id: "p-2", type: "relates_to" }],
+    });
+    expect(i?.dependencies[0]?.type).toBe("relates-to");
+    expect(i?.defer_until).toBe("2026-12-01T00:00:00Z");
+  });
+});
