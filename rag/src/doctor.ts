@@ -41,7 +41,9 @@ export function countFiles(vault: VaultEntry): number {
 
 export function checkVaults(cfg: Config, env: Env): Finding[] {
   return cfg.vaults.map((v) => {
-    const fromEnv = v.path_env !== undefined && env[v.path_env] !== undefined;
+    // Same rule as loadConfig: an empty or blank env value falls back to the default.
+    const envValue = v.path_env !== undefined ? env[v.path_env] : undefined;
+    const fromEnv = envValue !== undefined && envValue.trim() !== "";
     const source = fromEnv
       ? `env ${v.path_env}`
       : `path_default (${v.path_env ?? "no path_env"} unset)`;

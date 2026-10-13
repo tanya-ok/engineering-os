@@ -75,6 +75,12 @@ describe("checkVaults", () => {
     expect(ok?.level).toBe("ok");
     expect(ok?.message).toContain("1 files (env EOS_TEST_VAULT)");
   });
+
+  it("reports a blank env value as the default, like loadConfig", () => {
+    const cfg = loadConfig(setup(path.join(dir, "absent")), { HOME: dir, EOS_TEST_VAULT: " " });
+    const [f] = checkVaults(cfg, { EOS_TEST_VAULT: " " });
+    expect(f?.message).toContain("path_default (EOS_TEST_VAULT unset)");
+  });
 });
 
 describe("checkIndex", () => {
