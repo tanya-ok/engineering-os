@@ -4,6 +4,7 @@
   "private": true,
   "description": "Local hybrid RAG layer for engineering-os: transformers.js + SQLite (sqlite-vec + FTS5)",
   "license": "MIT",
+  "author": "Tanya Babitskaya",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tanya-ok/engineering-os.git",

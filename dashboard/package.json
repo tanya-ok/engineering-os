@@ -4,6 +4,7 @@
   "private": true,
   "description": "Work-graph dashboard for engineering-os: beads issues by project, dependencies, ready queue",
   "license": "MIT",
+  "author": "Tanya Babitskaya",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tanya-ok/engineering-os.git",

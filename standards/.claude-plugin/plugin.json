@@ -2,7 +2,7 @@
   "name": "engineering-os",
   "version": "0.1.0",
   "description": "Governance layer for engineering-os: canonical policies, skills, and lifecycle hooks for an infrastructure engineer's AI working environment",
-  "author": "engineering-os contributors",
+  "author": "Tanya Babitskaya",
   "license": "MIT",
   "homepage": "https://github.com/tanya-ok/engineering-os",
   "repository": "https://github.com/tanya-ok/engineering-os",
