@@ -25,6 +25,9 @@ knowledge base, wired into AI coding agents.
 - A local **work-graph dashboard** over beads: issues by project, dependency
   edges, and the ready queue, read-only through `bd export`.
 
+[Infrastructure and application ownership](docs/boundary.md) explains one planning
+convention, with a diagram and examples.
+
 ## Quickstart (15 minutes)
 
 ```sh

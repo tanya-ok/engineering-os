@@ -1,0 +1,122 @@
+{
+  "proposal_schema": 1,
+  "status": "pending-maintainer-review",
+  "installation_authorized": false,
+  "basis_commit": "72c5874e5874231ab9486b26264b5f56e18aa7db",
+  "source": {
+    "repository": "ai-assurance",
+    "commit": "353d374a00b43479870a6dee300dd200529cc60c",
+    "version": "0.2.1"
+  },
+  "profile_candidate": {
+    "schema": 2,
+    "project_id": "engineering-os",
+    "scope": "Local RAG/dashboard privacy, host guards and routed-work contracts using test data; no access to real vaults or model evaluation.",
+    "ci": {
+      "repository": "tanya-ok/engineering-os",
+      "workflow": ".github/workflows/ci.yml"
+    },
+    "controls": {
+      "access-boundary": {
+        "applicable": true,
+        "claim": "Local service host guards reject access through an untrusted host.",
+        "ci_checks": [
+          "test (rag)",
+          "test (dashboard)",
+          "anonymization"
+        ]
+      },
+      "data-exposure": {
+        "applicable": true,
+        "claim": "Configuration and package checks avoid including private vault paths or overlays.",
+        "ci_checks": [
+          "test (rag)",
+          "test (dashboard)",
+          "anonymization"
+        ]
+      },
+      "untrusted-instructions": {
+        "applicable": true,
+        "claim": "Retrieved context has no implied write authority; behavior evaluation remains a separate required gap.",
+        "ci_checks": [
+          "test (rag)",
+          "test (dashboard)",
+          "anonymization"
+        ]
+      },
+      "consequential-actions": {
+        "applicable": true,
+        "claim": "Work-item review transitions are constrained by the dashboard contract.",
+        "ci_checks": [
+          "test (rag)",
+          "test (dashboard)",
+          "anonymization"
+        ]
+      },
+      "evidence-lineage": {
+        "applicable": true,
+        "claim": "Freshness and indexing tests keep retrieval provenance explicit.",
+        "ci_checks": [
+          "test (rag)",
+          "test (dashboard)",
+          "anonymization"
+        ]
+      },
+      "bounded-claims": {
+        "applicable": true,
+        "claim": "Offline unit results do not claim real vault integrity or model-grounding accuracy.",
+        "ci_checks": [
+          "test (rag)",
+          "test (dashboard)",
+          "anonymization"
+        ]
+      }
+    }
+  },
+  "evidence_plan": {
+    "access-boundary": {
+      "paths": [
+        "rag/src/host-guard.test.ts",
+        "dashboard/src/host-guard.test.ts"
+      ],
+      "limitations": "Source inspection only; a passing job is not proof of every claim."
+    },
+    "data-exposure": {
+      "paths": [
+        "rag/src/config.test.ts",
+        "scripts/check-packages.mjs",
+        "scripts/anonymization-check.test.sh"
+      ],
+      "limitations": "Source inspection only; a passing job is not proof of every claim."
+    },
+    "untrusted-instructions": {
+      "paths": [
+        "standards/canonical/agent-security.md",
+        "rag/src/server.test.ts"
+      ],
+      "limitations": "Source inspection only; a passing job is not proof of every claim."
+    },
+    "consequential-actions": {
+      "paths": [
+        "dashboard/src/reviews.test.ts",
+        "dashboard/src/work-items.test.ts"
+      ],
+      "limitations": "Source inspection only; a passing job is not proof of every claim."
+    },
+    "evidence-lineage": {
+      "paths": [
+        "rag/src/freshness.test.ts",
+        "rag/src/indexer.test.ts"
+      ],
+      "limitations": "Source inspection only; a passing job is not proof of every claim."
+    },
+    "bounded-claims": {
+      "paths": [
+        ".github/workflows/ci.yml",
+        "rag/src/e2e.test.ts"
+      ],
+      "limitations": "Source inspection only; a passing job is not proof of every claim."
+    }
+  },
+  "remaining_gaps": "CI skips model-download E2E tests. Current tests do not validate resistance to semantic prompt injection or correctness of real-vault writes. Linear remains optional."
+}

@@ -67,5 +67,6 @@ Standing behavioral, git, language, and security policies live in
 
 Track this kit's maintenance in its own `.beads/` database (prefix `eos`).
 Verify `bd context` before mutations; never use another workspace tracker
-for personal project tasks. Keep runtime databases private and review portable
-`.beads/issues.jsonl` exports, omitting owner email fields before publication.
+for personal project tasks. Keep runtime databases and task exports local and
+untracked. Any public roadmap requires an explicitly reviewed minimal projection
+without private labels, actor fields or task details.

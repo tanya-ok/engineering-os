@@ -45,3 +45,5 @@ vault-template/.obsidian/cache
 /site/
 /.cache/
 AGENTS.local.md
+
+.beads/issues.jsonl
