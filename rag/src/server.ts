@@ -16,6 +16,8 @@ const RRF_K = 60;
 const TOP_MIN = 1;
 const TOP_MAX = 50;
 const BODY_MAX_BYTES = 64 * 1024;
+// sqlite-vec rejects larger k in a kNN query.
+const KNN_K_MAX = 4096;
 
 export interface SearchHit {
   chunk_id: number;
@@ -108,6 +110,43 @@ function dot(a: Float32Array, b: Float32Array): number {
   return sum;
 }
 
+// MMR over fused scores. RRF scores sit near 1/60 while cosine redundancy is
+// near 1, so relevance is min-max normalized first; otherwise the redundancy
+// term dominates and relevant near-duplicates of the first pick are dropped.
+export function mmrSelect(
+  candidates: number[],
+  scores: Map<number, number>,
+  vectors: Map<number, Float32Array>,
+  top: number,
+  lambda: number,
+): number[] {
+  const pool = candidates.filter((c) => vectors.has(c));
+  const raw = pool.map((c) => scores.get(c) ?? 0);
+  const min = Math.min(...raw);
+  const span = Math.max(...raw) - min;
+  const relevance = (c: number): number => (span > 0 ? ((scores.get(c) ?? 0) - min) / span : 1);
+  const selected: number[] = [];
+  while (pool.length > 0 && selected.length < top) {
+    let best = pool[0] as number;
+    let bestVal = Number.NEGATIVE_INFINITY;
+    for (const cand of pool) {
+      const cv = vectors.get(cand) as Float32Array;
+      let redundancy = 0;
+      for (const s of selected) {
+        redundancy = Math.max(redundancy, dot(cv, vectors.get(s) as Float32Array));
+      }
+      const val = lambda * relevance(cand) - (1 - lambda) * redundancy;
+      if (val > bestVal) {
+        best = cand;
+        bestVal = val;
+      }
+    }
+    selected.push(best);
+    pool.splice(pool.indexOf(best), 1);
+  }
+  return selected;
+}
+
 function mmrRerank(
   db: Database.Database,
   candidates: number[],
@@ -121,27 +160,7 @@ function mmrRerank(
     const row = stmt.get(cid) as { embedding: Buffer } | undefined;
     if (row !== undefined) vectors.set(cid, bufferToF32(row.embedding));
   }
-  const selected: number[] = [];
-  const pool = candidates.filter((c) => vectors.has(c));
-  while (pool.length > 0 && selected.length < top) {
-    let best = pool[0] as number;
-    let bestVal = Number.NEGATIVE_INFINITY;
-    for (const cand of pool) {
-      const cv = vectors.get(cand) as Float32Array;
-      let redundancy = 0;
-      for (const s of selected) {
-        redundancy = Math.max(redundancy, dot(cv, vectors.get(s) as Float32Array));
-      }
-      const val = lambda * (scores.get(cand) ?? 0) - (1 - lambda) * redundancy;
-      if (val > bestVal) {
-        best = cand;
-        bestVal = val;
-      }
-    }
-    selected.push(best);
-    pool.splice(pool.indexOf(best), 1);
-  }
-  return selected;
+  return mmrSelect(candidates, scores, vectors, top, lambda);
 }
 
 async function runSearch(
@@ -150,30 +169,89 @@ async function runSearch(
   params: SearchParams,
 ): Promise<SearchHit[]> {
   const qvec = await embedder.embedQuery(params.query);
-  const filtering =
-    params.vaults !== undefined || params.namespaces !== undefined || params.hybrid || params.mmr;
-  const pool = filtering ? params.top * 6 : params.top;
+  const filtered = params.vaults !== undefined || params.namespaces !== undefined;
+  const pool = filtered || params.hybrid || params.mmr ? params.top * 6 : params.top;
 
-  const knnIds = (
-    db
-      .prepare(
-        "SELECT chunk_id FROM embeddings WHERE embedding MATCH ? AND k = ? ORDER BY distance",
-      )
-      .all(f32ToBuffer(qvec), pool) as { chunk_id: number }[]
-  ).map((r) => r.chunk_id);
+  const metaStmt = db.prepare(
+    `SELECT c.vault_id, c.namespace, f.path, c.heading, c.content
+     FROM chunks c JOIN files f ON f.id = c.file_id WHERE c.id = ?`,
+  );
+  // null marks a chunk that is missing or outside the vault/namespace filter.
+  const seen = new Map<number, ChunkMeta | null>();
+  const keep = (cid: number): boolean => {
+    let m = seen.get(cid);
+    if (m === undefined) {
+      const row = metaStmt.get(cid) as
+        | {
+            vault_id: string;
+            namespace: string | null;
+            path: string;
+            heading: string | null;
+            content: string;
+          }
+        | undefined;
+      m = null;
+      if (row !== undefined) {
+        const c: ChunkMeta = {
+          vault_id: row.vault_id,
+          namespace: row.namespace ?? "",
+          path: row.path,
+          heading: row.heading ?? "",
+          content: row.content,
+        };
+        const passV = params.vaults === undefined || params.vaults.includes(c.vault_id);
+        const passN = params.namespaces === undefined || params.namespaces.includes(c.namespace);
+        if (passV && passN) m = c;
+      }
+      seen.set(cid, m);
+    }
+    return m !== null;
+  };
+
+  // The kNN cutoff is global, so a filter can leave a small vault with no
+  // candidates. Widen k until the filtered pool fills or the index runs out.
+  const knnStmt = db.prepare(
+    "SELECT chunk_id FROM embeddings WHERE embedding MATCH ? AND k = ? ORDER BY distance",
+  );
+  const qbuf = f32ToBuffer(qvec);
+  let k = pool;
+  let knnIds: number[];
+  for (;;) {
+    const ids = (knnStmt.all(qbuf, k) as { chunk_id: number }[]).map((r) => r.chunk_id);
+    knnIds = ids.filter(keep).slice(0, pool);
+    if (!filtered || knnIds.length >= pool || ids.length < k || k >= KNN_K_MAX) break;
+    k = Math.min(k * 4, KNN_K_MAX);
+  }
 
   let ftsIds: number[] = [];
   if (params.hybrid) {
     const ftsQuery = buildFtsQuery(params.query, ftsMode(db));
     if (ftsQuery !== "") {
+      const scope: string[] = [];
+      const args: (string | number)[] = [ftsQuery];
+      if (params.vaults !== undefined) {
+        scope.push(`vault_id IN (${params.vaults.map(() => "?").join(", ")})`);
+        args.push(...params.vaults);
+      }
+      if (params.namespaces !== undefined) {
+        scope.push(`COALESCE(namespace, '') IN (${params.namespaces.map(() => "?").join(", ")})`);
+        args.push(...params.namespaces);
+      }
+      const where =
+        scope.length > 0
+          ? ` AND rowid IN (SELECT id FROM chunks WHERE ${scope.join(" AND ")})`
+          : "";
+      args.push(pool);
       try {
         ftsIds = (
           db
             .prepare(
-              "SELECT rowid FROM chunks_fts WHERE chunks_fts MATCH ? ORDER BY bm25(chunks_fts) LIMIT ?",
+              `SELECT rowid FROM chunks_fts WHERE chunks_fts MATCH ?${where} ORDER BY bm25(chunks_fts) LIMIT ?`,
             )
-            .all(ftsQuery, pool) as { rowid: number }[]
-        ).map((r) => r.rowid);
+            .all(...args) as { rowid: number }[]
+        )
+          .map((r) => r.rowid)
+          .filter(keep);
       } catch {
         ftsIds = [];
       }
@@ -181,33 +259,10 @@ async function runSearch(
   }
 
   const fused = rrfFuse(knnIds, ftsIds);
-
-  const metaStmt = db.prepare(
-    `SELECT c.vault_id, c.namespace, f.path, c.heading, c.content
-     FROM chunks c JOIN files f ON f.id = c.file_id WHERE c.id = ?`,
-  );
   const meta = new Map<number, ChunkMeta>();
   for (const cid of fused.keys()) {
-    const row = metaStmt.get(cid) as
-      | {
-          vault_id: string;
-          namespace: string | null;
-          path: string;
-          heading: string | null;
-          content: string;
-        }
-      | undefined;
-    if (row === undefined) continue;
-    const m: ChunkMeta = {
-      vault_id: row.vault_id,
-      namespace: row.namespace ?? "",
-      path: row.path,
-      heading: row.heading ?? "",
-      content: row.content,
-    };
-    const passV = params.vaults === undefined || params.vaults.includes(m.vault_id);
-    const passN = params.namespaces === undefined || params.namespaces.includes(m.namespace);
-    if (passV && passN) meta.set(cid, m);
+    const m = seen.get(cid);
+    if (m) meta.set(cid, m);
   }
 
   const candidates = [...meta.keys()].sort((a, b) => (fused.get(b) ?? 0) - (fused.get(a) ?? 0));

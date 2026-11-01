@@ -30,6 +30,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: Se
   `dashboard/dashboard.json` (see `dashboard.example.json`).
 
 ### Fixed
+- MMR rerank normalizes fused scores before weighing them against redundancy;
+  relevant results are no longer dropped when `mmr` is on.
+- Vault and namespace filters no longer return empty or short results when a
+  small vault sits next to a large one: kNN widens until the filtered pool
+  fills, and the lexical pass filters inside the query.
 - Secret scanning handles root commits and rewritten history without computing
   a nonexistent parent; verify the pinned scanner archive before installation.
 - CI `test` job no longer times out: onnxruntime-node's postinstall tried to

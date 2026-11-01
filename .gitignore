@@ -11,6 +11,7 @@ projects.tsv
 # node
 node_modules/
 rag/dist/
+.vitest/
 
 # downloaded embedding model cache (fallback location if EOS_MODEL_CACHE unset
 # and an older build wrote here)
