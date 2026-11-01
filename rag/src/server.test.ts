@@ -206,3 +206,46 @@ describe("mmrSelect", () => {
     expect(mmrSelect([1, 3], flat, vectors, 2, 0.7)).toEqual([1, 3]);
   });
 });
+
+describe("filtered search", () => {
+  // 60 chunks in a large vault sit closer to the query than both chunks of a
+  // small vault, so a global top*6 kNN cutoff would hold none of them.
+  function skewedApp() {
+    const db = open(path.join(dir, "index.db"));
+    ensureSchema(db, DIM, "stub");
+    const file = db.prepare("INSERT INTO files(id, vault_id, path, mtime) VALUES (?, ?, ?, 1)");
+    const chunk = db.prepare(
+      "INSERT INTO chunks(id, file_id, vault_id, namespace, heading, content) VALUES (?, ?, ?, ?, 'H', ?)",
+    );
+    const emb = db.prepare("INSERT INTO embeddings(chunk_id, embedding) VALUES (?, ?)");
+    const fts = db.prepare("INSERT INTO chunks_fts(rowid, content) VALUES (?, ?)");
+    for (let id = 1; id <= 62; id += 1) {
+      const small = id > 60;
+      file.run(id, small ? "small" : "big", `/v/${id}.md`);
+      chunk.run(id, id, small ? "small" : "big", small ? "Ops" : "Main", `note ${id}`);
+      emb.run(BigInt(id), f32ToBuffer(Float32Array.from(small ? [0, 1, 0, 0] : [1, 0, 0, 0])));
+      fts.run(id, `note ${id}`);
+    }
+    return createApp(db, stubEmbedder, "stub", { host: "127.0.0.1", port: 8765 });
+  }
+
+  async function hitIds(body: unknown): Promise<number[]> {
+    const res = await search(skewedApp(), body);
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as { hits: { chunk_id: number }[] };
+    return json.hits.map((h) => h.chunk_id).sort((a, b) => a - b);
+  }
+
+  it("finds a small vault behind a large one", async () => {
+    expect(await hitIds({ query: "note", top: 3, vaults: ["small"] })).toEqual([61, 62]);
+  });
+
+  it("finds a small namespace with hybrid and MMR on", async () => {
+    const body = { query: "note", top: 3, namespaces: ["Ops"], hybrid: true, mmr: true };
+    expect(await hitIds(body)).toEqual([61, 62]);
+  });
+
+  it("returns nothing for a vault that does not exist", async () => {
+    expect(await hitIds({ query: "note", top: 3, vaults: ["none"] })).toEqual([]);
+  });
+});
