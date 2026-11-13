@@ -172,10 +172,10 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: 2.1.5
-        version: 2.1.5(hono@4.13.13)
+        version: 2.1.5(hono@4.13.16)
       hono:
-        specifier: 4.13.13
-        version: 4.13.13
+        specifier: 4.13.16
+        version: 4.13.16
     devDependencies:
       '@biomejs/biome':
         specifier: 2.6.2
@@ -984,8 +984,8 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  hono@4.13.13:
-    resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
+  hono@4.13.16:
+    resolution: {integrity: sha512-AOLOEhvrV+iH92xXCnFr/5+3KjPKcI3xP63XJtX5spAnkznPdHijlIsUTpi7/9EhWqrTCekw5c5zh1K+YsVw7A==}
     engines: {node: '>=16.9.0'}
 
   iconv-lite@0.6.3:
@@ -1358,9 +1358,9 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@hono/node-server@2.1.5(hono@4.13.13)':
+  '@hono/node-server@2.1.5(hono@4.13.16)':
     dependencies:
-      hono: 4.13.13
+      hono: 4.13.16
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
@@ -1841,7 +1841,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  hono@4.13.13: {}
+  hono@4.13.16: {}
 
   iconv-lite@0.6.3:
     dependencies:
