@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@hono/node-server": "2.1.6",
-    "hono": "4.13.16"
+    "hono": "4.13.13"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.5",
