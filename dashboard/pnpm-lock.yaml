@@ -171,8 +171,8 @@ importers:
   .:
     dependencies:
       '@hono/node-server':
-        specifier: 2.1.6
-        version: 2.1.6(hono@4.13.13)
+        specifier: 2.1.5
+        version: 2.1.5(hono@4.13.16)
       hono:
         specifier: 4.13.16
         version: 4.13.16
@@ -1425,7 +1425,7 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@hono/node-server@2.1.6(hono@4.13.13)':
+  '@hono/node-server@2.1.5(hono@4.13.16)':
     dependencies:
       hono: 4.13.16
 
