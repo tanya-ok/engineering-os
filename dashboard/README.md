@@ -51,6 +51,33 @@ Only `external_ref_url` and `projects` reach the browser (`GET /api/config`);
 paths and the workspace location stay on the server side. Link fields must be
 absolute http or https URLs; anything else is a config error.
 
+### Several repositories in one graph
+
+When each repository keeps its own `.beads` directory, list them under
+`sources` instead of `beads_root`. The dashboard runs `bd export` in every
+`bd` source and draws one graph; the project of an issue is its
+`repository_id`. See `dashboard.portfolio.example.json`.
+
+```json
+{
+  "ttl_seconds": 30,
+  "sources": [
+    { "source_id": "beads", "repository_id": "orchard-search", "label": "Orchard Search", "source": { "kind": "bd", "root": "~/code/orchard-search" } },
+    { "source_id": "beads", "repository_id": "orchard-infra", "label": "Orchard Infra", "source": { "kind": "bd", "root": "~/code/orchard-infra" } }
+  ],
+  "projects": {
+    "orchard-search": { "label": "Orchard Search", "url": "https://example.com/orchard" }
+  }
+}
+```
+
+Each `source_id` and `repository_id` pair must be unique. A config can live
+outside the repository; pass it with `--config`:
+
+```sh
+node dashboard/dist/cli.js serve --config ~/.engineering-os/dashboard.json
+```
+
 ## API
 
 - `GET /api/health` - `{status, source, issues, projects, loaded_at, last_error}`
